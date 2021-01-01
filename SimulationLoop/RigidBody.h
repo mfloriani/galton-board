@@ -6,7 +6,8 @@ enum class VolumeType
 {
 	None,
 	Sphere,
-	AABB
+	AABB,
+	OBB
 };
 
 class RigidBody
@@ -28,7 +29,8 @@ public:
 	float          friction{ 0.6f };
 	float          restitution{ 0.5f };
 	Sphere         sphereVolume;
-	AABB           boxVolume;
+	AABB           aabbVolume;
+	OBB            obbVolume;
 
 private:
 	math::Vector3D m_forces;

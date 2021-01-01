@@ -102,6 +102,7 @@
     <ClCompile Include="Math\AffineTransform.cpp" />
     <ClCompile Include="Math\MathUtil.cpp" />
     <ClCompile Include="Math\Matrix3.cpp" />
+    <ClCompile Include="Math\Matrix4.cpp" />
     <ClCompile Include="Math\Vector2D.cpp" />
     <ClCompile Include="Math\Vector3D.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
@@ -116,6 +117,7 @@
     <ClInclude Include="Math\Geometry.h" />
     <ClInclude Include="Math\MathUtil.h" />
     <ClInclude Include="Math\Matrix3.h" />
+    <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Vector2D.h" />
     <ClInclude Include="Math\Vector3D.h" />
     <ClInclude Include="PhysicsSystem.h" />

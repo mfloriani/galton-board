@@ -306,6 +306,12 @@ namespace math
 	Matrix3 transpose(const Matrix3& matrix);
 	Matrix3 adjoint(const Matrix3& matrix);
 	Matrix3 inverse(const Matrix3& matrix);
+	Matrix3 xRotation3x3(float angle);
+	Matrix3 yRotation3x3(float angle);
+	Matrix3 zRotation3x3(float angle);
+	Matrix3 rotation3x3(float pitch, float yaw, float roll);
+	
+
 }
 
 #endif

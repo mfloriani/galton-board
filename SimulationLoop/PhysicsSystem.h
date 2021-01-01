@@ -31,7 +31,7 @@ private:
 	static ManifoldPoint CheckCollision(const RigidBody& A, const RigidBody& B);
 	static ManifoldPoint CheckCollision(const Sphere& A, const Sphere& B);
 	static ManifoldPoint CheckCollision(const AABB& A, const Sphere& B);
-	static ManifoldPoint CheckCollision(const AABB& A, const AABB& B);
+	static ManifoldPoint CheckCollision(const OBB& A, const Sphere& B);
 
 private:
 	void ApplyLinearImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);

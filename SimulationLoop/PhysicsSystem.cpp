@@ -178,21 +178,25 @@ ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody&
 		}
 		else if (B.type == VolumeType::AABB)
 		{
-			result = CheckCollision(B.boxVolume, A.sphereVolume);
-			//result.normal = result.normal * -1.0f;
+			result = CheckCollision(B.aabbVolume, A.sphereVolume);
+		}
+		else if (B.type == VolumeType::OBB)
+		{
+			result = CheckCollision(B.obbVolume, A.sphereVolume);
+			result.normal = result.normal * -1.0f;
 		}
 	}
-	else if (A.type == VolumeType::AABB)
-	{
-		if (B.type == VolumeType::AABB)
-		{
-			result = CheckCollision(A.boxVolume, B.boxVolume);
-		}
-		else if (B.type == VolumeType::Sphere)
-		{
-			result = CheckCollision(A.boxVolume, B.sphereVolume);
-		}
-	}
+	//else if (A.type == VolumeType::AABB)
+	//{
+	//	if (B.type == VolumeType::AABB)
+	//	{
+	//		result = CheckCollision(A.boxVolume, B.boxVolume);
+	//	}
+	//	else if (B.type == VolumeType::Sphere)
+	//	{
+	//		result = CheckCollision(A.boxVolume, B.sphereVolume);
+	//	}
+	//}
 
 	return result;
 }
@@ -201,7 +205,7 @@ ManifoldPoint PhysicsSystem::CheckCollision(const Sphere& A, const Sphere& B)
 {
 	ManifoldPoint result;
 
-	float r = A.radius + B.radius;
+	const float r = A.radius + B.radius;
 	math::Vector3D d = B.position - A.position;
 
 	if (d.sizeSqr() - r * r > 0 || d.sizeSqr() == 0.0f)
@@ -250,7 +254,42 @@ ManifoldPoint PhysicsSystem::CheckCollision(const AABB& A, const Sphere& B)
 	return ManifoldPoint();
 }
 
-ManifoldPoint PhysicsSystem::CheckCollision(const AABB& A, const AABB& B)
+ManifoldPoint PhysicsSystem::CheckCollision(const OBB& A, const Sphere& B)
 {
+	if (SphereOBB(B, A))
+	{
+		ManifoldPoint result;
+
+		math::Vector3D closestPoint = ClosestPoint(A, B.position);
+
+		const float distanceSq = (closestPoint - B.position).sizeSqr();
+		if (distanceSq > B.radius * B.radius)
+			return result;
+
+		math::Vector3D normal;
+		if (CMP(distanceSq, 0.0f)) 
+		{
+			if (CMP((closestPoint - A.position).sizeSqr(), 0.0f)) 
+				return result;
+
+			// Closest point is at the center of the sphere
+			normal = (closestPoint - A.position).normalize();
+		}
+		else 
+		{
+			normal = (B.position - closestPoint).normalize();
+		}
+
+		math::Vector3D outsidePoint = B.position - normal * B.radius;
+
+		const float distance = (closestPoint - outsidePoint).size();
+
+		result.colliding = true;
+		result.contacts.push_back(closestPoint + (outsidePoint - closestPoint) * 0.5f);
+		result.normal = normal;
+		result.depth = distance * 0.5f;
+
+		return result;
+	}
 	return ManifoldPoint();
 }

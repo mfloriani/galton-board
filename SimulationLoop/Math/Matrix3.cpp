@@ -20,6 +20,7 @@
 ******************************************************************************/
 #include "Matrix3.h"
 #include "Vector2D.h"
+#include "Vector3D.h"
 
 #include <cmath>
 #include <algorithm>
@@ -229,6 +230,8 @@ Matrix3& Matrix3::transpose()
 	return (*this = math::transpose(*this));
 }
 
+
+
 Matrix3 math::adjoint(const Matrix3& A)
 {
     return Matrix3 (
@@ -258,4 +261,38 @@ Matrix3 math::transpose(const Matrix3& matrix)
 			other(i, j) = matrix(j, i);
 
 	return other;	
+}
+
+Matrix3 math::xRotation3x3(float angle)
+{
+	angle = toRadians(angle);
+	return Matrix3(
+		1.0f, 0.0f, 0.0f,
+		0.0f, cosf(angle), sinf(angle),
+		0.0f, -sinf(angle), cosf(angle)
+	);
+}
+
+Matrix3 math::yRotation3x3(float angle)
+{
+	angle = toRadians(angle);
+	return Matrix3(
+		cosf(angle), 0.0f, -sinf(angle),
+		0.0f, 1.0f, 0.0f,
+		sinf(angle), 0.0f, cosf(angle)
+	);
+}
+
+Matrix3 math::zRotation3x3(float angle) {
+	angle = toRadians(angle);
+	return Matrix3(
+		cosf(angle), sinf(angle), 0.0f,
+		-sinf(angle), cosf(angle), 0.0f,
+		0.0f, 0.0f, 1.0f
+	);
+}
+
+Matrix3 math::rotation3x3(float pitch, float yaw, float roll)
+{
+	return zRotation3x3(roll) * xRotation3x3(pitch) * yRotation3x3(yaw);
 }

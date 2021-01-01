@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Math\Vector3D.h"
+#include "Math\Matrix3.h"
 
 #define CMP(x, y) (fabsf(x - y) <= FLT_EPSILON * fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))))
 
@@ -27,7 +28,7 @@ struct AABB
 	math::Vector3D position;
 	math::Vector3D size;
 
-	AABB() : size(1.f, 1.f, 0.f){}
+	AABB() : size(1.f, 1.f, 1.f){}
 	AABB(const math::Vector3D& p, const math::Vector3D& s): position(p), size(s){}
 };
 
@@ -35,6 +36,13 @@ struct OBB
 {
 	math::Vector3D position;
 	math::Vector3D size;
+	math::Matrix3  orientation;
+
+	//math::Vector3D orientation[3];
+
+	OBB() : size(1.f, 1.f, 1.f) {}
+	OBB(const math::Vector3D& p, const math::Vector3D& s) : position(p), size(s){}
+	OBB(const math::Vector3D& p, const math::Vector3D& s, const math::Matrix3& o) : position(p), size(s), orientation(o){}
 };
 
 struct Sphere
@@ -52,7 +60,9 @@ math::Vector3D GetMax(const AABB& aabb);
 
 bool PointInAABB(const math::Vector3D& point, const AABB& aabb);
 bool PointOnPlane(const math::Vector3D& point, const Plane& plane);
+bool PointInOBB(const math::Vector3D& point, const OBB& obb);
 
+math::Vector3D ClosestPoint(const OBB& obb, const math::Vector3D& point);
 //math::Vector3D ClosestPoint(const AABB& aabb, const math::Vector3D& point);
 math::Vector3D ClosestPoint(const Plane& plane, const math::Vector3D& point);
 float SqDistPointAABB(const math::Vector3D& p, const AABB& b);
@@ -65,3 +75,7 @@ bool SpherePlane(const Sphere& s, const Plane& p);
 
 bool SphereAABB(const Sphere& sphere, const AABB& aabb);
 #define AABBSphere(aabb, sphere) SphereAABB(sphere, aabb)
+
+bool SphereOBB(const Sphere& sphere, const OBB& obb);
+#define OBBSphere(obb, sphere) SphereOBB(sphere, obb)
+

@@ -18,7 +18,8 @@ public:
 	void Render();
 
 	static RigidBody* CreateSphere(math::Vector3D pos, math::Vector3D vel, float mass, float radius);
-	static RigidBody* CreateCube(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size);
+	static RigidBody* CreateAABB(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size);
+	static RigidBody* CreateOBB(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size, math::Vector3D angles);
 
 private:
 	HDC   m_hdc;

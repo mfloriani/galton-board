@@ -41,7 +41,8 @@ void RigidBody::Update(float dt)
 void RigidBody::SyncCollisionVolumes()
 {
 	sphereVolume.position = position;
-	boxVolume.position = position;
+	aabbVolume.position = position;
+	obbVolume.position = position;
 }
 
 
