@@ -17,7 +17,7 @@ inline float RigidBody::InverseMass()
 
 void RigidBody::ApplyForces()
 {
-	m_forces = Vector2f(0.0f, -9.81f * mass);
+	m_forces = math::Vector3D(0.0f, -9.81f * mass, 0.f);
 }
 
 void RigidBody::Update(float dt)
@@ -26,7 +26,7 @@ void RigidBody::Update(float dt)
 	constexpr float damping = 0.98f;
 
 	// Calculate acceleration
-	Vector2f accel = m_forces * InverseMass();
+	math::Vector3D accel = m_forces * InverseMass();
 
 	// Integrate accel to get the velocity (using Euler)
 	velocity = velocity + (accel * dt);

@@ -17,8 +17,8 @@ public:
 	void Update();
 	void Render();
 
-	static RigidBody* CreateSphere(Vector2f pos, Vector2f vel, float mass, float radius);
-	static RigidBody* CreateCube(Vector2f pos, Vector2f vel, float mass, Vector2f size);
+	static RigidBody* CreateSphere(math::Vector3D pos, math::Vector3D vel, float mass, float radius);
+	static RigidBody* CreateCube(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size);
 
 private:
 	HDC   m_hdc;

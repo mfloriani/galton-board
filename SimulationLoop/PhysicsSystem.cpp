@@ -97,7 +97,7 @@ void PhysicsSystem::AvoidSinking()
 
 		float depth = fmaxf(m_results[i].depth - m_penetrationSlack, 0.0f);
 		float scalar = depth / invMassSum;
-		Vector2f correction = m_results[i].normal * scalar * m_linearProjectionPercent;
+		math::Vector3D correction = m_results[i].normal * scalar * m_linearProjectionPercent;
 
 		rb1->position = rb1->position - correction * rb1->InverseMass();
 		rb2->position = rb2->position + correction * rb2->InverseMass();
@@ -116,9 +116,9 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	if (invMassSum == 0.0f)
 		return;
 
-	Vector2f relativeVel = B.velocity - A.velocity;
-	Vector2f relativeNormal = P.normal;
-	relativeNormal.normalise();
+	math::Vector3D relativeVel = B.velocity - A.velocity;
+	math::Vector3D relativeNormal = P.normal;
+	relativeNormal = relativeNormal.normalize();
 
 	const float relativeDir = relativeVel.dot(relativeNormal);
 
@@ -132,7 +132,7 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	if (P.contacts.size() > 0 && j != 0.0f)
 		j /= (float)P.contacts.size();
 
-	Vector2f impulse = relativeNormal * j;
+	math::Vector3D impulse = relativeNormal * j;
 	A.velocity = A.velocity - impulse * invMassA;
 	B.velocity = B.velocity + impulse * invMassB;
 
@@ -140,11 +140,11 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	// Friction
 	//
 
-	Vector2f t = relativeVel - (relativeNormal * relativeDir);
-	if (CMP(t.lengthSq(), 0.0f))
+	math::Vector3D t = relativeVel - (relativeNormal * relativeDir);
+	if (CMP(t.sizeSqr(), 0.0f))
 		return;
 
-	t.normalise();
+	t = t.normalize();
 
 	numerator = -relativeVel.dot(t);
 	float jt = numerator / invMassSum;
@@ -161,7 +161,7 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	else if (jt < -j * friction)
 		jt = -j * friction;
 
-	Vector2f tangentImpulse = t * jt;
+	math::Vector3D tangentImpulse = t * jt;
 	A.velocity = A.velocity - tangentImpulse * invMassA;
 	B.velocity = B.velocity + tangentImpulse * invMassB;
 }
@@ -202,21 +202,21 @@ ManifoldPoint PhysicsSystem::CheckCollision(const Sphere& A, const Sphere& B)
 	ManifoldPoint result;
 
 	float r = A.radius + B.radius;
-	Vector2f d = B.position - A.position;
+	math::Vector3D d = B.position - A.position;
 
-	if (d.lengthSq() - r * r > 0 || d.lengthSq() == 0.0f)
+	if (d.sizeSqr() - r * r > 0 || d.sizeSqr() == 0.0f)
 		return result;
 
-	d.normalise();
+	d = d.normalize();
 
-	const float depth = fabsf(d.length() - r) * 0.5f;
+	const float depth = fabsf(d.size() - r) * 0.5f;
 
 	result.colliding = true;
 	result.normal = d;
 	result.depth = depth;
 
 	const float dtp = A.radius - depth;
-	Vector2f contact = A.position + d * dtp;
+	math::Vector3D contact = A.position + d * dtp;
 	result.contacts.push_back(contact);
 
 	return result;
@@ -226,17 +226,15 @@ ManifoldPoint PhysicsSystem::CheckCollision(const AABB& A, const Sphere& B)
 {
 	if (AABBSphere(A, B))
 	{
-		Vector2f closestPoint;
+		math::Vector3D closestPoint;
 		ClosestPtPointAABB(B.position, A, closestPoint);
 		
 		const float distSq = closestPoint.dot(closestPoint);
 
-		Vector2f d = closestPoint - B.position;
-		d.normalise();
+		math::Vector3D d = closestPoint - B.position;
+		d = d.normalize();
 
-		const float depth = fabsf((closestPoint - B.position).length() - B.radius);
-
-		//contact.penetration = aABB.DistPointAABB(Centre) - Radius;
+		const float depth = fabsf((closestPoint - B.position).size() - B.radius);
 
 		ManifoldPoint result;
 		result.colliding = true;
@@ -244,7 +242,7 @@ ManifoldPoint PhysicsSystem::CheckCollision(const AABB& A, const Sphere& B)
 		result.depth = depth;
 
 		const float dtp = B.radius - depth;
-		Vector2f contact = B.position + d * dtp;
+		math::Vector3D contact = B.position + d * dtp;
 		result.contacts.push_back(contact);
 
 		return result;

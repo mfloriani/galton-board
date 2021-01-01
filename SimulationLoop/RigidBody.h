@@ -21,17 +21,17 @@ public:
 	void SyncCollisionVolumes();
 
 public:
-	VolumeType type{ VolumeType::None };
-	Vector2f   velocity;
-	Vector2f   position;
-	float      mass{ 1.0f };
-	float      friction{ 0.6f };
-	float      restitution{ 0.5f };
-	Sphere     sphereVolume;
-	AABB       boxVolume;
+	VolumeType     type{ VolumeType::None };
+	math::Vector3D velocity;
+	math::Vector3D position;
+	float          mass{ 1.0f };
+	float          friction{ 0.6f };
+	float          restitution{ 0.5f };
+	Sphere         sphereVolume;
+	AABB           boxVolume;
 
 private:
-	Vector2f m_forces;
+	math::Vector3D m_forces;
 
 
 };

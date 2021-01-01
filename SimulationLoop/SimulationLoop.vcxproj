@@ -99,20 +99,29 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Math\AffineTransform.cpp" />
+    <ClCompile Include="Math\MathUtil.cpp" />
+    <ClCompile Include="Math\Matrix3.cpp" />
+    <ClCompile Include="Math\Vector2D.cpp" />
+    <ClCompile Include="Math\Vector3D.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
-    <ClCompile Include="Vector2f.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="Math\AffineTransform.h" />
+    <ClInclude Include="Math\Geometry.h" />
+    <ClInclude Include="Math\MathUtil.h" />
+    <ClInclude Include="Math\Matrix3.h" />
+    <ClInclude Include="Math\Vector2D.h" />
+    <ClInclude Include="Math\Vector3D.h" />
     <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="TextureLoader.h" />
-    <ClInclude Include="Vector2f.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,11 +7,11 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 
 	m_physicsSys = new PhysicsSystem();
 	
-	m_physicsSys->AddRigidBody(CreateSphere(Vector2f(0, 0), Vector2f(0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateSphere(Vector2f(0, 20), Vector2f(0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateSphere(Vector2f(10, 20), Vector2f(0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateSphere(Vector2f(-10, 20), Vector2f(0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateCube(Vector2f(0, -20), Vector2f(0, 0), 0.0f, Vector2f(15, 1)));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 0, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 20.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(10.f, 20.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-10.f, 20.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateCube(math::Vector3D(0, -20.f, 0), math::Vector3D(0, 0, 0), 0.0f, math::Vector3D(15.f, 1.f, 0)));
 
 
 	QueryPerformanceFrequency(&frequency);
@@ -72,7 +72,7 @@ void Game::Render()
 	SwapBuffers(m_hdc);
 }
 
-RigidBody* Game::CreateSphere(Vector2f pos, Vector2f vel, float mass, float radius)
+RigidBody* Game::CreateSphere(math::Vector3D pos, math::Vector3D vel, float mass, float radius)
 {
 	RigidBody* body = new RigidBody();
 	body->position = pos;
@@ -84,7 +84,7 @@ RigidBody* Game::CreateSphere(Vector2f pos, Vector2f vel, float mass, float radi
 	return body;
 }
 
-RigidBody* Game::CreateCube(Vector2f pos, Vector2f vel, float mass, Vector2f size)
+RigidBody* Game::CreateCube(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size)
 {
 	RigidBody* body = new RigidBody();
 	body->position = pos;

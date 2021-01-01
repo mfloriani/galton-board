@@ -1,18 +1,18 @@
 #include "Geometry.h"
 #include "TextureLoader.h"
 
-Vector2f ClosestPoint(const Plane& plane, const Vector2f& point)
+math::Vector3D ClosestPoint(const Plane& plane, const math::Vector3D& point)
 {
 	const float dot = plane.normal.dot(point);
 	const float distance = dot - plane.distance;
 	return point - plane.normal * distance;
 }
 
-//Vector2f ClosestPoint(const AABB& aabb, const Vector2f& point)
+//math::Vector3D ClosestPoint(const AABB& aabb, const math::Vector3D& point)
 //{
-//	Vector2f result = point;
-//	Vector2f min = GetMin(aabb);
-//	Vector2f max = GetMax(aabb);
+//	math::Vector3D result = point;
+//	math::Vector3D min = GetMin(aabb);
+//	math::Vector3D max = GetMax(aabb);
 //
 //	result.x = (result.x < min.x) ? min.x : result.x;
 //	result.y = (result.y < min.x) ? min.y : result.y;
@@ -23,10 +23,10 @@ Vector2f ClosestPoint(const Plane& plane, const Vector2f& point)
 //	return result;
 //}
 
-float SqDistPointAABB(const Vector2f& p, const AABB& b)
+float SqDistPointAABB(const math::Vector3D& p, const AABB& b)
 {
-	Vector2f min = GetMin(b);
-	Vector2f max = GetMax(b);
+	math::Vector3D min = GetMin(b);
+	math::Vector3D max = GetMax(b);
 
 	float sqDist = 0.0f;
 	
@@ -43,10 +43,10 @@ float SqDistPointAABB(const Vector2f& p, const AABB& b)
 }
 
 // Given point p, return the point q on or in AABB b that is closest to p
-void ClosestPtPointAABB(const Vector2f& p, const AABB& b, Vector2f& q)
+void ClosestPtPointAABB(const math::Vector3D& p, const AABB& b, math::Vector3D& q)
 {
-	Vector2f min = GetMin(b);
-	Vector2f max = GetMax(b);
+	math::Vector3D min = GetMin(b);
+	math::Vector3D max = GetMax(b);
 
 	// For each coordinate axis, if the point coordinate value is
 	// outside box, clamp it to the box, else keep it as is	
@@ -61,10 +61,10 @@ void ClosestPtPointAABB(const Vector2f& p, const AABB& b, Vector2f& q)
 	q.y = v;
 }
 
-bool PointInAABB(const Vector2f& point, const AABB& aabb)
+bool PointInAABB(const math::Vector3D& point, const AABB& aabb)
 {
-	Vector2f min = GetMin(aabb);
-	Vector2f max = GetMax(aabb);
+	math::Vector3D min = GetMin(aabb);
+	math::Vector3D max = GetMax(aabb);
 
 	if (point.x < min.x || point.y < min.y)
 		return false;
@@ -75,48 +75,50 @@ bool PointInAABB(const Vector2f& point, const AABB& aabb)
 	return true;
 }
 
-bool PointOnPlane(const Vector2f& point, const Plane& plane)
+bool PointOnPlane(const math::Vector3D& point, const Plane& plane)
 {
 	const float dot = point.dot(plane.normal);
 	return CMP(dot - plane.distance, 0.0f);
 }
 
-Vector2f GetMin(const AABB& aabb)
+math::Vector3D GetMin(const AABB& aabb)
 {
-	Vector2f p1 = aabb.position + aabb.size;
-	Vector2f p2 = aabb.position - aabb.size;
+	math::Vector3D p1 = aabb.position + aabb.size;
+	math::Vector3D p2 = aabb.position - aabb.size;
 
-	return Vector2f(
+	return math::Vector3D(
 		fminf(p1.x, p2.x), 
-		fminf(p1.y, p2.y)
+		fminf(p1.y, p2.y),
+		0.f
 	);
 }
 
-Vector2f GetMax(const AABB& aabb)
+math::Vector3D GetMax(const AABB& aabb)
 {
-	Vector2f p1 = aabb.position + aabb.size;
-	Vector2f p2 = aabb.position - aabb.size;
+	math::Vector3D p1 = aabb.position + aabb.size;
+	math::Vector3D p2 = aabb.position - aabb.size;
 
-	return Vector2f(
+	return math::Vector3D(
 		fmaxf(p1.x, p2.x),
-		fmaxf(p1.y, p2.y)
+		fmaxf(p1.y, p2.y),
+		0.f
 	);
 }
 
-//AABB FromMinMax(const Vector2f& min, const Vector2f& max)
+//AABB FromMinMax(const math::Vector3D& min, const math::Vector3D& max)
 //{
 //	return AABB( (min + max) * 0.5f, (max - min) * 0.5f);
 //}
 
-float PlaneEquation(const Vector2f& point, const Plane& plane)
+float PlaneEquation(const math::Vector3D& point, const Plane& plane)
 {
 	return point.dot(plane.normal) - plane.distance;
 }
 
 bool SpherePlane(const Sphere& s, const Plane& p)
 {
-	Vector2f closestPoint = ClosestPoint(p, s.position);
-	const float distSq = (s.position - closestPoint).lengthSq();
+	math::Vector3D closestPoint = ClosestPoint(p, s.position);
+	const float distSq = (s.position - closestPoint).sizeSqr();
 	const float radiusSq = s.radius * s.radius;
 	return distSq < radiusSq;
 }
@@ -124,7 +126,7 @@ bool SpherePlane(const Sphere& s, const Plane& p)
 bool SphereAABB(const Sphere& sphere, const AABB& aabb)
 {
 	const float distSq = SqDistPointAABB(sphere.position, aabb);
-	//Vector2f closestPoint = ClosestPoint(aabb, sphere.position);
+	//math::Vector3D closestPoint = ClosestPoint(aabb, sphere.position);
 	//const float distSq = (sphere.position - closestPoint).lengthSq();
 	const float radiusSq = sphere.radius * sphere.radius;
 	return distSq < radiusSq;
@@ -144,7 +146,7 @@ bool SphereAABB(const Sphere& sphere, const AABB& aabb)
 //		point.contactNormal = plane.normal;
 //		point.depth = -BallDist;
 //
-//		Vector2f contact = sphere.position - plane.normal * (BallDist + sphere.radius);
+//		math::Vector3D contact = sphere.position - plane.normal * (BallDist + sphere.radius);
 //		point.contacts.push_back(contact);
 //
 //		contactManifold->Add(point);
@@ -159,7 +161,7 @@ bool SphereAABB(const Sphere& sphere, const AABB& aabb)
 //
 //		if (centerDist * centerDist > sphere.radius * sphere.radius) return;
 //
-//		Vector2f normal = plane.normal;
+//		math::Vector3D normal = plane.normal;
 //		float depth = -centerDist;
 //		if (centerDist < 0)
 //		{
@@ -174,7 +176,7 @@ bool SphereAABB(const Sphere& sphere, const AABB& aabb)
 //		point.contactNormal = normal;
 //		point.depth = depth;
 //
-//		Vector2f contact = sphere.position - plane.normal * centerDist;
+//		math::Vector3D contact = sphere.position - plane.normal * centerDist;
 //		point.contacts.push_back(contact);
 //
 //		contactManifold->Add(point);
