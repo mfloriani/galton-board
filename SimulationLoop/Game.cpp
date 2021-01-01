@@ -8,10 +8,10 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 
 	m_physicsSys = new PhysicsSystem();
 	
-	//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 0, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
-	//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 0, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
 	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(10.f, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
-	//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-10.f, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
+	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-10.f, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
 	m_physicsSys->AddRigidBody(CreateAABB(math::Vector3D(0, 30.f, 0), math::Vector3D(0, 0, 0), 0.0f, math::Vector3D(15.f, 1.f, 15.f)));
 	m_physicsSys->AddRigidBody(
 		CreateOBB(
@@ -19,7 +19,7 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 			math::Vector3D(0, 0, 0), 
 			0.0f, 
 			math::Vector3D(15.0f, 1.0f, 15.0f), 
-			math::Vector3D(0.f, 0.f, -45.f)
+			math::Vector3D(0.f, 0.f, -15.f)
 		)
 	);
 

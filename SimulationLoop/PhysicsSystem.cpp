@@ -203,27 +203,31 @@ ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody&
 
 ManifoldPoint PhysicsSystem::CheckCollision(const Sphere& A, const Sphere& B)
 {
-	ManifoldPoint result;
+	if (SphereSphere(A, B))
+	{
+		ManifoldPoint result;
 
-	const float r = A.radius + B.radius;
-	math::Vector3D d = B.position - A.position;
+		const float r = A.radius + B.radius;
+		math::Vector3D d = B.position - A.position;
 
-	if (d.sizeSqr() - r * r > 0 || d.sizeSqr() == 0.0f)
+		if (d.sizeSqr() - r * r > 0 || d.sizeSqr() == 0.0f)
+			return result;
+
+		d = d.normalize();
+
+		const float depth = fabsf(d.size() - r) * 0.5f;
+
+		result.colliding = true;
+		result.normal = d;
+		result.depth = depth;
+
+		const float dtp = A.radius - depth;
+		math::Vector3D contact = A.position + d * dtp;
+		result.contacts.push_back(contact);
+
 		return result;
-
-	d = d.normalize();
-
-	const float depth = fabsf(d.size() - r) * 0.5f;
-
-	result.colliding = true;
-	result.normal = d;
-	result.depth = depth;
-
-	const float dtp = A.radius - depth;
-	math::Vector3D contact = A.position + d * dtp;
-	result.contacts.push_back(contact);
-
-	return result;
+	}
+	return ManifoldPoint();
 }
 
 ManifoldPoint PhysicsSystem::CheckCollision(const AABB& A, const Sphere& B)
