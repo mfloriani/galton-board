@@ -1,8 +1,12 @@
 #pragma once
 
 #include <Windows.h>
-#include "Sphere.h"
-#include "ContactManifold.h"
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <gl\gl.h>
+#include <gl\GLU.h>
+
+#include "PhysicsSystem.h"
 
 class Game
 {
@@ -11,24 +15,18 @@ public:
 	~Game(void);
 
 	void Update();
-
-private:
-	void SimulationLoop();
-	void CalculateObjectPhysics();
-	void DynamicCollisionDetection();
-	void DynamicCollisionResponse();
-	void UpdateObjectPhysics();
 	void Render();
+
+	static RigidBody* CreateSphere(Vector2f pos, Vector2f vel, float mass, float radius);
+	static RigidBody* CreateCube(Vector2f pos, Vector2f vel, float mass, Vector2f size);
 
 private:
 	HDC   m_hdc;
 	float m_dt;
 	int	  m_fps;
 	float m_previousTime;
-	Sphere *m_sphere1;
-	Sphere *m_sphere2;
-	Sphere *m_sphere3;
-	ContactManifold *m_manifold;
+	
+	PhysicsSystem* m_physicsSys;
 	LARGE_INTEGER start, end, frequency;
 };
 

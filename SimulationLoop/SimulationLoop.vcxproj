@@ -96,17 +96,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ContactManifold.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="PhysicsSystem.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="Vector2f.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ContactManifold.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="Sphere.h" />
+    <ClInclude Include="Geometry.h" />
+    <ClInclude Include="PhysicsSystem.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="Vector2f.h" />
   </ItemGroup>

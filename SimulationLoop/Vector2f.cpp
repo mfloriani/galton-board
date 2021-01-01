@@ -2,64 +2,51 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-Vector2f::Vector2f(void)
+Vector2f::Vector2f(void) 
 {
 }
 
-Vector2f::Vector2f(float x, float y)
+Vector2f::Vector2f(float x, float y) : x(x), y(y) 
 {
-	m_x = x;
-	m_y = y;
 }
 
 Vector2f::~Vector2f(void)
 {
 }
 
-void Vector2f::Set(float x, float y)
-{
-	m_x = x;
-	m_y = y;
-}
-
-float Vector2f::GetX() const
-{
-	return m_x;
-}
-
-float Vector2f::GetY() const
-{
-	return m_y;
-}
-
 Vector2f Vector2f::add(const Vector2f &vec) const
 {
-	return Vector2f(m_x + vec.GetX(), m_y + vec.GetY());
+	return Vector2f(x + vec.x, y + vec.y);
 }
 
 Vector2f Vector2f::subtract(const Vector2f &vec) const
 {
-	return Vector2f(m_x - vec.GetX(), m_y - vec.GetY());
+	return Vector2f(x - vec.x, y - vec.y);
 }
 
 Vector2f Vector2f::mult(float n) const
 {
-	return Vector2f(m_x*n, m_y*n);
+	return Vector2f(x*n, y*n);
 }
 
 Vector2f Vector2f::divide(float n) const
 {
-	return Vector2f(m_x/n, m_y/n);
+	return Vector2f(x/n, y/n);
 }
 
 float Vector2f::dot(const Vector2f &vec) const
 {
-	return m_x*vec.GetX() + m_y*vec.GetY();
+	return x*vec.x + y*vec.y;
 }
 
 float Vector2f::length() const
 {
-	return sqrt(m_x*m_x + m_y*m_y);
+	return sqrtf(x*x + y*y);
+}
+
+float Vector2f::lengthSq() const
+{
+	return x * x + y * y;
 }
 
 float Vector2f::distance(const Vector2f &vec) const
@@ -70,7 +57,8 @@ float Vector2f::distance(const Vector2f &vec) const
 Vector2f Vector2f::normalise()
 {
 	float len = length();
-	Set(m_x/len, m_y/len);
+	x = x / len;
+	y = y / len;
 	return *this;
 }
 
