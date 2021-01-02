@@ -299,6 +299,7 @@ namespace math
 			*/
 			Matrix3& transpose();
 
+			float* data() { return *A; }
 	};
 
 	Matrix3 operator *(float scalar, const Matrix3& matrix);

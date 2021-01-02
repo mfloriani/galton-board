@@ -1,6 +1,13 @@
 #include "Game.h"
 #include "Renderer.h"
 #include "Math\Matrix3.h"
+#include <random>
+#include<time.h>
+
+#define BALL_SIZE  0.5f
+#define BALL_TOTAL 50
+
+
 
 Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 {
@@ -8,21 +15,86 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 
 	m_physicsSys = new PhysicsSystem();
 	
-	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 0, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(10.f, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-10.f, 10.f, 0), math::Vector3D(0, 0, 0), 1.0f, 5));
-	m_physicsSys->AddRigidBody(CreateAABB(math::Vector3D(0, 30.f, 0), math::Vector3D(0, 0, 0), 0.0f, math::Vector3D(15.f, 1.f, 15.f)));
+	srand(time(0));
+
+	for (int i = 0; i < BALL_TOTAL; ++i)
+	{
+		int x = rand() % 10;
+		int y = rand() % 10;
+
+		x = i % 2 == 0 ? x : -x;
+
+		m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(x, 20 + y, 0), math::Vector3D(0, -20, 0), 100000.0f, BALL_SIZE));
+	}
+
+	//m_physicsSys->AddRigidBody(CreateAABB(math::Vector3D(0, 30.f, 0), math::Vector3D(0, 0, 0), 0.0f, math::Vector3D(15.f, 1.f, 15.f)));
+	
+	// left funnel
+	m_physicsSys->AddRigidBody(
+		CreateOBB(
+			math::Vector3D(-9.0f, 13.f, 0.f),
+			math::Vector3D(0, 0, 0),
+			0.0f,
+			math::Vector3D(8.0f, 1.0f, 1.0f),
+			math::Vector3D(0.f, 0.f, -35.f)
+		)
+	);
+
+	// right funnel
+	m_physicsSys->AddRigidBody(
+		CreateOBB(
+			math::Vector3D(9.0f, 13.f, 0.f),
+			math::Vector3D(0, 0, 0),
+			0.0f,
+			math::Vector3D(8.0f, 1.0f, 1.0f),
+			math::Vector3D(0.f, 0.f, 35.f)
+		)
+	);
+	
+	// left
+	m_physicsSys->AddRigidBody(
+		CreateOBB(
+			math::Vector3D(-15.0f, -5.f, 0.f),
+			math::Vector3D(0, 0, 0),
+			0.0f,
+			math::Vector3D(1.0f, 25.0f, 1.0f),
+			math::Vector3D(0.f, 0.f, 0.f)
+		)
+	);
+
+	// right
+	m_physicsSys->AddRigidBody(
+		CreateOBB(
+			math::Vector3D(15.0f, -5.f, 0.f),
+			math::Vector3D(0, 0, 0),
+			0.0f,
+			math::Vector3D(1.0f, 25.0f, 1.0f),
+			math::Vector3D(0.f, 0.f, 0.f)
+		)
+	);
+
+	// back
+	m_physicsSys->AddRigidBody(
+		CreateOBB(
+			math::Vector3D(0.0f, -5.f, -2.f),
+			math::Vector3D(0, 0, 0),
+			0.0f,
+			math::Vector3D(15.0f, 25.0f, 1.0f),
+			math::Vector3D(0.f, 0.f, 0.f)
+		)
+	);
+	
+	// bottom
 	m_physicsSys->AddRigidBody(
 		CreateOBB(
 			math::Vector3D(0.0f, -30.f, 0.f), 
 			math::Vector3D(0, 0, 0), 
 			0.0f, 
-			math::Vector3D(15.0f, 1.0f, 15.0f), 
-			math::Vector3D(0.f, 0.f, -15.f)
+			math::Vector3D(15.0f, 1.0f, 1.0f), 
+			math::Vector3D(0.f, 0.f, 0.f)
 		)
 	);
-
+	
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
 }

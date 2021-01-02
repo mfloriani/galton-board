@@ -1,4 +1,7 @@
 #include "PhysicsSystem.h"
+//#include "Math\Vector3D.h"
+#include "Geometry.h"
+
 
 
 PhysicsSystem::PhysicsSystem()
@@ -116,7 +119,18 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	if (invMassSum == 0.0f)
 		return;
 
+#ifdef ENABLE_ANGULAR
+	math::Vector3D r1 = P.contacts[c] - A.position;
+	math::Vector3D r2 = P.contacts[c] - B.position;
+	math::Matrix4 i1 = A.InverseTensor();
+	math::Matrix4 i2 = B.InverseTensor();
+#endif
+
+#ifdef ENABLE_ANGULAR
+	math::Vector3D relativeVel = (B.velocity + B.angularVel.cross(r2)) - (A.velocity + A.angularVel.cross(r1));
+#else
 	math::Vector3D relativeVel = B.velocity - A.velocity;
+#endif
 	math::Vector3D relativeNormal = P.normal;
 	relativeNormal = relativeNormal.normalize();
 
@@ -128,7 +142,16 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 
 	const float e = fminf(A.restitution, B.restitution);
 	float numerator = -(1.0f + e) * relativeDir;
-	float j = numerator / invMassSum;
+	float d1 = invMassSum;
+#ifdef ENABLE_ANGULAR
+	math::Vector3D d2 = (math::multiplyVector(r1.cross(relativeNormal), i1)).cross(r1);
+	math::Vector3D d3 = (math::multiplyVector(r2.cross(relativeNormal), i2)).cross(r2);
+	float denominator = d1 + relativeNormal.dot(d2 + d3);
+#else
+	float denominator = d1;
+#endif
+
+	float j = denominator == 0.f ? 0.f : numerator / denominator;
 	if (P.contacts.size() > 0 && j != 0.0f)
 		j /= (float)P.contacts.size();
 
@@ -136,6 +159,10 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	A.velocity = A.velocity - impulse * invMassA;
 	B.velocity = B.velocity + impulse * invMassB;
 
+#ifdef ENABLE_ANGULAR
+	A.angularVel -= math::multiplyVector(r1.cross(impulse), i1);
+	B.angularVel += math::multiplyVector(r2.cross(impulse), i2);
+#endif
 	//
 	// Friction
 	//
@@ -147,7 +174,18 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	t = t.normalize();
 
 	numerator = -relativeVel.dot(t);
-	float jt = numerator / invMassSum;
+	d1 = invMassSum;
+#ifdef ENABLE_ANGULAR
+	d2 = (math::multiplyVector(r1.cross(t), i1)).cross(r1);
+	d3 = (math::multiplyVector(r2.cross(t), i2)).cross(r2);
+	denominator = d1 + t.dot(d2 + d3);
+#else
+	denominator = d1;
+#endif
+	if (denominator == 0.f)
+		return;
+
+	float jt = numerator / denominator;
 
 	if (P.contacts.size() > 0 && jt != 0.0f)
 		jt /= (float)P.contacts.size();
@@ -164,6 +202,10 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	math::Vector3D tangentImpulse = t * jt;
 	A.velocity = A.velocity - tangentImpulse * invMassA;
 	B.velocity = B.velocity + tangentImpulse * invMassB;
+#ifdef ENABLE_ANGULAR
+	A.angularVel -= math::multiplyVector(r1.cross(tangentImpulse), i1);
+	B.angularVel -= math::multiplyVector(r2.cross(tangentImpulse), i2);
+#endif
 }
 
 ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody& B)
@@ -186,15 +228,15 @@ ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody&
 			result.normal = result.normal * -1.0f;
 		}
 	}
-	//else if (A.type == VolumeType::AABB)
+	//else if (A.type == VolumeType::OBB)
 	//{
-	//	if (B.type == VolumeType::AABB)
+	//	if (B.type == VolumeType::OBB)
 	//	{
-	//		result = CheckCollision(A.boxVolume, B.boxVolume);
+	//		result = CheckCollision(A.obbVolume, B.obbVolume);
 	//	}
 	//	else if (B.type == VolumeType::Sphere)
 	//	{
-	//		result = CheckCollision(A.boxVolume, B.sphereVolume);
+	//		result = CheckCollision(A.obbVolume, B.sphereVolume);
 	//	}
 	//}
 
@@ -297,3 +339,95 @@ ManifoldPoint PhysicsSystem::CheckCollision(const OBB& A, const Sphere& B)
 	}
 	return ManifoldPoint();
 }
+
+#if 0
+ManifoldPoint PhysicsSystem::CheckCollision(const OBB& A, const OBB& B)
+{
+	ManifoldPoint result;
+
+	Sphere s1(A.position, A.size.size());
+	Sphere s2(B.position, B.size.size());
+
+	if (!SphereSphere(s1, s2)) 
+		return result;
+
+	const math::Matrix3& o1 = A.orientation;
+	const math::Matrix3& o2 = B.orientation;
+
+	math::Vector3D test[15] = 
+	{
+		math::Vector3D(o1.a(), o1.b(), o1.c()),
+		math::Vector3D(o1.d(), o1.e(), o1.f()),
+		math::Vector3D(o1.g(), o1.h(), o1.k()),
+		math::Vector3D(o2.a(), o2.b(), o2.c()),
+		math::Vector3D(o2.d(), o2.e(), o2.f()),
+		math::Vector3D(o2.g(), o2.h(), o2.k())
+	};
+
+	for (int i = 0; i < 3; ++i) 
+	{
+		test[6 + i * 3 + 0] = test[i].cross(test[0]);
+		test[6 + i * 3 + 1] = test[i].cross(test[1]);
+		test[6 + i * 3 + 2] = test[i].cross(test[2]);
+	}
+
+	math::Vector3D* hitNormal = 0;
+	bool shouldFlip;
+
+	for (int i = 0; i < 15; ++i) 
+	{
+		if (test[i].x < 0.000001f) test[i].x = 0.0f;
+		if (test[i].y < 0.000001f) test[i].y = 0.0f;
+		if (test[i].z < 0.000001f) test[i].z = 0.0f;
+		if (test[i].sizeSqr() < 0.001f)
+			continue;
+
+		float depth = PenetrationDepth(A, B, test[i], &shouldFlip);
+		if (depth <= 0.0f) {
+			return result;
+		}
+		else if (depth < result.depth) {
+			if (shouldFlip) {
+				test[i] = test[i] * -1.0f;
+			}
+			result.depth = depth;
+			hitNormal = &test[i];
+		}
+	}
+
+	if (hitNormal == 0)
+		return result;
+
+	math::Vector3D axis = (*hitNormal).normalize();
+
+	std::vector<math::Vector3D> c1 = ClipEdgesToOBB(GetEdges(B), A);
+	std::vector<math::Vector3D> c2 = ClipEdgesToOBB(GetEdges(A), B);
+	result.contacts.reserve(c1.size() + c2.size());
+	result.contacts.insert(result.contacts.end(), c1.begin(), c1.end());
+	result.contacts.insert(result.contacts.end(), c2.begin(), c2.end());
+
+	Interval i = GetInterval(A, axis);
+	float distance = (i.max - i.min) * 0.5f - result.depth * 0.5f;
+	math::Vector3D pointOnPlane = A.position + axis * distance;
+
+	for (int i = result.contacts.size() - 1; i >= 0; --i) 
+	{
+		math::Vector3D contact = result.contacts[i];
+		result.contacts[i] = contact + (axis * axis.dot(pointOnPlane - contact));
+
+		// This bit is in the "There is more" section of the book
+		for (int j = result.contacts.size() - 1; j > i; --j) {
+			if ((result.contacts[j] - result.contacts[i]).sizeSqr() < 0.0001f) {
+				result.contacts.erase(result.contacts.begin() + j);
+				break;
+			}
+		}
+	}
+
+	result.colliding = true;
+	result.normal = axis;
+
+	return result;
+}
+
+#endif

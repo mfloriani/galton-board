@@ -197,54 +197,220 @@ bool SphereOBB(const Sphere& sphere, const OBB& obb)
 	return distSq < radiusSq;
 }
 
+#if 0
 
-//void SphereCollisionWithPlane(const Sphere& sphere, const Plane& plane, ContactManifold* contactManifold)
-//{
-//	if (SpherePlane(sphere, plane))
-//	{
-//		const float BallDist = plane.normal.dot(sphere.position) - sphere.radius - plane.distance;
-//
-//		if (BallDist >= 0.0f) return;
-//
-//		ManifoldPoint point;
-//		point.contactID1 = this;
-//		point.contactID2_p = plane;
-//		point.contactNormal = plane.normal;
-//		point.depth = -BallDist;
-//
-//		math::Vector3D contact = sphere.position - plane.normal * (BallDist + sphere.radius);
-//		point.contacts.push_back(contact);
-//
-//		contactManifold->Add(point);
-//	}
-//}
-//
-//void SphereCollisionWithTruePlane(const Sphere& sphere, const Plane& plane, ContactManifold* contactManifold)
-//{
-//	if (SpherePlane(sphere, plane))
-//	{
-//		const float centerDist = plane.normal.dot(sphere.position) - plane.distance;
-//
-//		if (centerDist * centerDist > sphere.radius * sphere.radius) return;
-//
-//		math::Vector3D normal = plane.normal;
-//		float depth = -centerDist;
-//		if (centerDist < 0)
-//		{
-//			normal = normal * -1;
-//			depth = -depth;
-//		}
-//		depth += sphere.radius;
-//
-//		ManifoldPoint point;
-//		point.contactID1 = this;
-//		point.contactID2_p = plane;
-//		point.contactNormal = normal;
-//		point.depth = depth;
-//
-//		math::Vector3D contact = sphere.position - plane.normal * centerDist;
-//		point.contacts.push_back(contact);
-//
-//		contactManifold->Add(point);
-//	}
-//}
+Interval GetInterval(const OBB& obb, const math::Vector3D& axis) 
+{
+	math::Vector3D vertex[8];
+
+	math::Vector3D C = obb.position;	// OBB Center
+	math::Vector3D E = obb.size;		// OBB Extents
+	const math::Matrix3& o = obb.orientation;
+	math::Vector3D A[] = {			// OBB Axis
+		math::Vector3D(o.a(), o.b(), o.c()),
+		math::Vector3D(o.d(), o.e(), o.f()),
+		math::Vector3D(o.g(), o.h(), o.k())
+	};
+
+	vertex[0] = C + A[0] * E[0] + A[1] * E[1] + A[2] * E[2];
+	vertex[1] = C - A[0] * E[0] + A[1] * E[1] + A[2] * E[2];
+	vertex[2] = C + A[0] * E[0] - A[1] * E[1] + A[2] * E[2];
+	vertex[3] = C + A[0] * E[0] + A[1] * E[1] - A[2] * E[2];
+	vertex[4] = C - A[0] * E[0] - A[1] * E[1] - A[2] * E[2];
+	vertex[5] = C + A[0] * E[0] - A[1] * E[1] - A[2] * E[2];
+	vertex[6] = C - A[0] * E[0] + A[1] * E[1] - A[2] * E[2];
+	vertex[7] = C - A[0] * E[0] - A[1] * E[1] + A[2] * E[2];
+
+	Interval result;
+	result.min = result.max = axis.dot(vertex[0]);
+
+	for (int i = 1; i < 8; ++i) {
+		float projection = axis.dot(vertex[i]);
+		result.min = (projection < result.min) ? projection : result.min;
+		result.max = (projection > result.max) ? projection : result.max;
+	}
+
+	return result;
+}
+
+std::vector<math::Vector3D> ClipEdgesToOBB(const std::vector<Line>& edges, const OBB& obb) 
+{
+	std::vector<math::Vector3D> result;
+	result.reserve(edges.size() * 3);
+	math::Vector3D intersection;
+
+	std::vector<Plane>& planes = GetPlanes(obb);
+
+	for (unsigned int i = 0; i < planes.size(); ++i) {
+		for (unsigned int j = 0; j < edges.size(); ++j) {
+			if (ClipToPlane(planes[i], edges[j], &intersection)) {
+				if (PointInOBB(intersection, obb)) {
+					result.push_back(intersection);
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
+bool ClipToPlane(const Plane& plane, const Line& line, math::Vector3D* outPoint) {
+	math::Vector3D ab = line.end - line.start;
+
+	float nA = plane.normal.dot(line.start);
+	float nAB = plane.normal.dot(ab);
+
+	if (CMP(nAB, 0)) {
+		return false;
+	}
+
+	float t = (plane.distance - nA) / nAB;
+	if (t >= 0.0f && t <= 1.0f) {
+		if (outPoint != 0) {
+			*outPoint = line.start + ab * t;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+float PenetrationDepth(const OBB& o1, const OBB& o2, math::Vector3D& axis, bool* outShouldFlip)
+{
+	Interval i1 = GetInterval(o1, axis.normalize());
+	Interval i2 = GetInterval(o2, axis.normalize());
+
+	if (!((i2.min <= i1.max) && (i1.min <= i2.max))) 
+		return 0.0f; // No penerattion
+
+	float len1 = i1.max - i1.min;
+	float len2 = i2.max - i2.min;
+	float min = fminf(i1.min, i2.min);
+	float max = fmaxf(i1.max, i2.max);
+	float length = max - min;
+
+	if (outShouldFlip != 0) 
+		*outShouldFlip = (i2.min < i1.min);
+
+	return (len1 + len2) - length;
+}
+
+std::vector<Plane> GetPlanes(const OBB& obb) {
+	math::Vector3D c = obb.position;	// OBB Center
+	math::Vector3D e = obb.size;		// OBB Extents
+	const math::Matrix3& o = obb.orientation;
+	math::Vector3D a[] = {			// OBB Axis
+		math::Vector3D(o.a(), o.b(), o.c()),
+		math::Vector3D(o.d(), o.e(), o.f()),
+		math::Vector3D(o.g(), o.h(), o.k()),
+	};
+
+	std::vector<Plane> result;
+	result.resize(6);
+
+	result[0] = Plane(a[0], (a[0].dot(c + a[0] * e.x)));
+	result[1] = Plane(a[0] * -1.0f, -(a[0].dot(c - a[0] * e.x)));
+	result[2] = Plane(a[1], (a[1].dot(c + a[1] * e.y)));
+	result[3] = Plane(a[1] * -1.0f, -(a[1].dot(c - a[1] * e.y)));
+	result[4] = Plane(a[2], (a[2].dot(c + a[2] * e.z)));
+	result[5] = Plane(a[2] * -1.0f, -(a[2].dot(c - a[2] * e.z)));
+
+	return result;
+}
+
+std::vector<Line> GetEdges(const OBB& obb) {
+	std::vector<Line> result;
+	result.reserve(12);
+	std::vector<math::Vector3D> v = GetVertices(obb);
+
+	int index[][2] = { // Indices of edges
+		{ 6, 1 },{ 6, 3 },{ 6, 4 },{ 2, 7 },{ 2, 5 },{ 2, 0 },
+		{ 0, 1 },{ 0, 3 },{ 7, 1 },{ 7, 4 },{ 4, 5 },{ 5, 3 }
+	};
+
+	for (int j = 0; j < 12; ++j) {
+		result.push_back(Line(
+			v[index[j][0]], v[index[j][1]]
+		));
+	}
+
+	return result;
+}
+
+std::vector<math::Vector3D> GetVertices(const OBB& obb) {
+	std::vector<math::Vector3D> v;
+	v.resize(8);
+
+	math::Vector3D C = obb.position;	// OBB Center
+	math::Vector3D E = obb.size;		// OBB Extents
+	const math::Matrix3& o = obb.orientation;
+	math::Vector3D A[] = {			// OBB Axis
+		math::Vector3D(o.a(), o.b(), o.c()),
+		math::Vector3D(o.d(), o.e(), o.f()),
+		math::Vector3D(o.g(), o.h(), o.k()),
+	};
+
+	v[0] = C + A[0] * E[0] + A[1] * E[1] + A[2] * E[2];
+	v[1] = C - A[0] * E[0] + A[1] * E[1] + A[2] * E[2];
+	v[2] = C + A[0] * E[0] - A[1] * E[1] + A[2] * E[2];
+	v[3] = C + A[0] * E[0] + A[1] * E[1] - A[2] * E[2];
+	v[4] = C - A[0] * E[0] - A[1] * E[1] - A[2] * E[2];
+	v[5] = C + A[0] * E[0] - A[1] * E[1] - A[2] * E[2];
+	v[6] = C - A[0] * E[0] + A[1] * E[1] - A[2] * E[2];
+	v[7] = C - A[0] * E[0] - A[1] * E[1] + A[2] * E[2];
+
+	return v;
+}
+
+void SphereCollisionWithPlane(const Sphere& sphere, const Plane& plane, ContactManifold* contactManifold)
+{
+	if (SpherePlane(sphere, plane))
+	{
+		const float BallDist = plane.normal.dot(sphere.position) - sphere.radius - plane.distance;
+
+		if (BallDist >= 0.0f) return;
+
+		ManifoldPoint point;
+		point.contactID1 = this;
+		point.contactID2_p = plane;
+		point.contactNormal = plane.normal;
+		point.depth = -BallDist;
+
+		math::Vector3D contact = sphere.position - plane.normal * (BallDist + sphere.radius);
+		point.contacts.push_back(contact);
+
+		contactManifold->Add(point);
+	}
+}
+
+void SphereCollisionWithTruePlane(const Sphere& sphere, const Plane& plane, ContactManifold* contactManifold)
+{
+	if (SpherePlane(sphere, plane))
+	{
+		const float centerDist = plane.normal.dot(sphere.position) - plane.distance;
+
+		if (centerDist * centerDist > sphere.radius * sphere.radius) return;
+
+		math::Vector3D normal = plane.normal;
+		float depth = -centerDist;
+		if (centerDist < 0)
+		{
+			normal = normal * -1;
+			depth = -depth;
+		}
+		depth += sphere.radius;
+
+		ManifoldPoint point;
+		point.contactID1 = this;
+		point.contactID2_p = plane;
+		point.contactNormal = normal;
+		point.depth = depth;
+
+		math::Vector3D contact = sphere.position - plane.normal * centerDist;
+		point.contacts.push_back(contact);
+
+		contactManifold->Add(point);
+	}
+}
+
+#endif

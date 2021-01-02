@@ -10,12 +10,13 @@ void Renderer::Init()
 
 void Renderer::DrawSphere(const Sphere& s)
 {
-    glEnable(GL_TEXTURE_2D);
+    //glEnable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);
 
     glPushMatrix();
 	glTranslatef(s.position.x, s.position.y, 0);
-	glColor3d(0, 1, 0);
-	glBindTexture(GL_TEXTURE_2D, m_sphereTex);
+	glColor3d(1, 1, 1);
+	//glBindTexture(GL_TEXTURE_2D, m_sphereTex);
 	GLUquadric* quadric = gluNewQuadric();
 	gluQuadricDrawStyle(quadric, GLU_FILL);
 	gluQuadricTexture(quadric, GL_TRUE);
@@ -87,7 +88,7 @@ void Renderer::DrawOBBCube(const OBB& c)
     glPushMatrix();
     
     math::Matrix4 scale = math::scale(c.size);
-    math::Matrix4 rotation = math::FromMatrix3(c.orientation);
+    math::Matrix4 rotation = math::fromMatrix3(c.orientation);
     math::Matrix4 translation = math::translation(c.position);
 
     math::Matrix4 transform = scale * rotation * translation;

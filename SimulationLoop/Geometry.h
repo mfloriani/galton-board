@@ -3,8 +3,9 @@
 #include <vector>
 #include "Math\Vector3D.h"
 #include "Math\Matrix3.h"
+#include "Utils.h"
 
-#define CMP(x, y) (fabsf(x - y) <= FLT_EPSILON * fmaxf(1.0f, fmaxf(fabsf(x), fabsf(y))))
+//#define ENABLE_ANGULAR
 
 struct ManifoldPoint
 {
@@ -14,13 +15,14 @@ struct ManifoldPoint
 	std::vector<math::Vector3D> contacts;
 };
 
-struct Plane
+struct Plane 
 {
 	math::Vector3D normal;
-	float          distance;
+	float distance;
 
-	Plane() : normal(1.f, 0.f, 0.f), distance(0.f) {}
-	Plane(const math::Vector3D& n, float d) : normal(n), distance(d) {}
+	inline Plane() : normal(1, 0, 0) { }
+	inline Plane(const math::Vector3D& n, float d) :
+		normal(n), distance(d) { }
 };
 
 struct AABB
@@ -52,6 +54,23 @@ struct Sphere
 	Sphere(const math::Vector3D& pos, float r) : position(pos), radius(r){}
 };
 
+struct Interval 
+{
+	float min;
+	float max;
+};
+
+struct Line 
+{
+	math::Vector3D start;
+	math::Vector3D end;
+
+	inline Line() {}
+	inline Line(const math::Vector3D& s, const math::Vector3D& e) :
+		start(s), end(e) { }
+};
+
+
 math::Vector3D GetMin(const AABB& aabb);
 math::Vector3D GetMax(const AABB& aabb);
 //AABB FromMinMax(const math::Vector3D& min, const math::Vector3D& max);
@@ -78,3 +97,14 @@ bool SphereAABB(const Sphere& sphere, const AABB& aabb);
 bool SphereOBB(const Sphere& sphere, const OBB& obb);
 #define OBBSphere(obb, sphere) SphereOBB(sphere, obb)
 
+#if 0
+
+float PenetrationDepth(const OBB& o1, const OBB& o2, math::Vector3D& axis, bool* outShouldFlip);
+Interval GetInterval(const OBB& obb, const math::Vector3D& axis);
+std::vector<math::Vector3D> ClipEdgesToOBB(const std::vector<Line>& edges, const OBB& obb);
+std::vector<math::Vector3D> GetVertices(const OBB& obb);
+std::vector<Line> GetEdges(const OBB& obb);
+bool ClipToPlane(const Plane& plane, const Line& line, math::Vector3D* outPoint);
+std::vector<Plane> GetPlanes(const OBB& obb);
+
+#endif

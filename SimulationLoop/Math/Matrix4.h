@@ -107,6 +107,7 @@ namespace math
 	Matrix4 transpose(const Matrix4& matrix);
 	Matrix4 scale(const Vector3D& vec);
 	Matrix4 translation(const Vector3D& pos);
-	Matrix4 FromMatrix3(const Matrix3& mat);
-	
+	Matrix4 fromMatrix3(const Matrix3& mat);
+	Matrix4 inverse(const Matrix4& m);
+	Vector3D multiplyVector(const Vector3D& vec, const Matrix4& mat);
 }
