@@ -32,8 +32,8 @@ public:
 	math::Vector3D orientation;
 	math::Vector3D angularVel;
 	float          mass{ 1.0f };
-	float          friction{ 0.6f };
-	float          restitution{ 0.5f };
+	float          friction{ 0.0f };
+	float          restitution{ 0.0f };
 	Sphere         sphereVolume;
 	AABB           aabbVolume;
 	OBB            obbVolume;

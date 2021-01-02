@@ -26,7 +26,7 @@ private:
 	// Smaller = less jitter / more penetration [0.2 to 0.8]
 	float m_linearProjectionPercent{ 0.2f };
 	// More interations more accurate [1 to 20]
-	int m_impulseIteration{ 8 };
+	int m_impulseIteration{ 20 };
 
 	static ManifoldPoint CheckCollision(const RigidBody& A, const RigidBody& B);
 	static ManifoldPoint CheckCollision(const Sphere& A, const Sphere& B);

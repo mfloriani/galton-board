@@ -114,6 +114,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Math\AffineTransform.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Math\Geometry.h" />
     <ClInclude Include="Math\MathUtil.h" />
     <ClInclude Include="Math\Matrix3.h" />

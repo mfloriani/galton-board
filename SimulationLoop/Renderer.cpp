@@ -15,7 +15,8 @@ void Renderer::DrawSphere(const Sphere& s)
 
     glPushMatrix();
 	glTranslatef(s.position.x, s.position.y, 0);
-	glColor3d(1, 1, 1);
+    glColor3f(s.color.x, s.color.y, s.color.z);
+
 	//glBindTexture(GL_TEXTURE_2D, m_sphereTex);
 	GLUquadric* quadric = gluNewQuadric();
 	gluQuadricDrawStyle(quadric, GLU_FILL);
@@ -33,45 +34,47 @@ void Renderer::DrawAABBCube(const AABB& c)
     glScalef(c.size.x, c.size.y, c.size.z);
     glTranslatef(c.position.x, c.position.y, c.position.z);
 
+    glColor3f(c.color.x, c.color.y, c.color.z);
+
     glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
     // Top face (y = 1.0f)
     // Define vertices in counter-clockwise (CCW) order with normal pointing out
-    glColor3f(0.0f, 1.0f, 0.0f);     // Green
+    //glColor3f(0.0f, 1.0f, 0.0f);     // Green
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
     // Bottom face (y = -1.0f)
-    glColor3f(1.0f, 0.5f, 0.0f);     // Orange
+    //glColor3f(1.0f, 0.5f, 0.0f);     // Orange
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
 
     // Front face  (z = 1.0f)
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
+    //glColor3f(1.0f, 0.0f, 0.0f);     // Red
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
 
     // Back face (z = -1.0f)
-    glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
+    //glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
 
     // Left face (x = -1.0f)
-    glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+    //glColor3f(0.0f, 0.0f, 1.0f);     // Blue
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
     // Right face (x = 1.0f)
-    glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
+    //glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
@@ -99,45 +102,47 @@ void Renderer::DrawOBBCube(const OBB& c)
 
     glMultMatrixf(transform.data());
 
+    glColor3f(c.color.x, c.color.y, c.color.z);
+
     glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
     // Top face (y = 1.0f)
     // Define vertices in counter-clockwise (CCW) order with normal pointing out
-    glColor3f(0.0f, 1.0f, 0.0f);     // Green
+    //glColor3f(0.0f, 1.0f, 0.0f);     // Green
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
     // Bottom face (y = -1.0f)
-    glColor3f(1.0f, 0.5f, 0.0f);     // Orange
+    //glColor3f(1.0f, 0.5f, 0.0f);     // Orange
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
 
     // Front face  (z = 1.0f)
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
+    //glColor3f(1.0f, 0.0f, 0.0f);     // Red
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
 
     // Back face (z = -1.0f)
-    glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
+    //glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
 
     // Left face (x = -1.0f)
-    glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+    //glColor3f(0.0f, 0.0f, 1.0f);     // Blue
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
     // Right face (x = 1.0f)
-    glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
+    //glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);

@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <Windows.h>
 #include "Game.h"
+#include "Camera.h"
+#include "Math\Vector3D.h"
 
 const char TITLE[] = "Window Creation";
+
+#define WND_WIDTH  800
+#define WND_HEIGHT 800
 
 Game *game;
 
@@ -13,6 +18,11 @@ HDC			hDC=NULL;		// Private GDI Device Context
 //*****************************************************************************
 
 //************************ MESSAGE HANDLER **************************
+
+#define VK_W 0x57
+#define VK_S 0x53
+#define VK_D 0x44
+#define VK_A 0x41
 
 LRESULT CALLBACK WindowProc(HWND hwnd, 
 	UINT msg, 
@@ -49,10 +59,24 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 			case VK_F12:
 				PostMessage(hwnd, WM_CLOSE, 0, 0);
 				return (0);
-			default:
-				char message[15];
-				sprintf_s(message, "Key Pressed: %c", (char)wparam);
-				MessageBox(NULL, message, "Key Pressed", MB_OK);
+			case VK_W:
+				game->camera->ProcessKeyboard(UP);
+				break;
+			case VK_S:
+				game->camera->ProcessKeyboard(DOWN);
+				break;
+			case VK_D:
+				game->camera->ProcessKeyboard(RIGHT);
+				break;
+			case VK_A:
+				game->camera->ProcessKeyboard(LEFT);
+				break;
+			case VK_UP:
+				game->camera->ProcessKeyboard(FORWARD);
+				break;
+			case VK_DOWN:
+				game->camera->ProcessKeyboard(BACKWARD);
+				break;
 			}
 			break;
 		}
@@ -91,7 +115,7 @@ void InitializeOpenGL(HWND hwnd, int width, int height)
 		PFD_SUPPORT_OPENGL |						// Format Must Support OpenGL
 		PFD_DOUBLEBUFFER,							// Must Support Double Buffering
 		PFD_TYPE_RGBA,								// Request An RGBA Format
-		24,										// Select Our Color Depth
+		24,										    // Select Our Color Depth
 		0, 0, 0, 0, 0, 0,							// Color Bits Ignored
 		0,											// No Alpha Buffer
 		0,											// Shift Bit Ignored
@@ -152,7 +176,7 @@ void InitializeOpenGL(HWND hwnd, int width, int height)
 	glLoadIdentity();									// Reset The Modelview Matrix
 
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);				// Black Background
+	glClearColor(0.5f, 0.5f, 1.f, 1.f);   				// Black Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
@@ -196,8 +220,8 @@ int WINAPI WinMain( HINSTANCE hinstance,
 		0,
 		0,
 		//Set the size of the window to the size of the screen 
-		600,
-		600,
+		WND_WIDTH,
+		WND_HEIGHT,
 		//GetSystemMetrics(SM_CXSCREEN),
 		//GetSystemMetrics(SM_CYSCREEN),
 		NULL,	   // handle to parent 
@@ -206,7 +230,7 @@ int WINAPI WinMain( HINSTANCE hinstance,
 		NULL)))	// creation parms
 		return(0);
 
-	InitializeOpenGL(hwnd, 600, 600);
+	InitializeOpenGL(hwnd, WND_WIDTH, WND_HEIGHT);
 
 	game = new Game(hDC);
 

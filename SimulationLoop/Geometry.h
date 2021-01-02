@@ -20,18 +20,24 @@ struct Plane
 	math::Vector3D normal;
 	float distance;
 
-	inline Plane() : normal(1, 0, 0) { }
-	inline Plane(const math::Vector3D& n, float d) :
-		normal(n), distance(d) { }
+	inline Plane() 
+		: normal(1, 0, 0) { }
+	inline Plane(const math::Vector3D& n, float d) 
+		: normal(n), distance(d) { }
 };
 
 struct AABB
 {
 	math::Vector3D position;
 	math::Vector3D size;
+	math::Vector3D color;
 
-	AABB() : size(1.f, 1.f, 1.f){}
-	AABB(const math::Vector3D& p, const math::Vector3D& s): position(p), size(s){}
+	AABB() 
+		: size(1.f, 1.f, 1.f){}
+	AABB(const math::Vector3D& p, const math::Vector3D& s) 
+		: position(p), size(s){}
+	AABB(const math::Vector3D& p, const math::Vector3D& s, const math::Vector3D c)
+		: position(p), size(s), color(c){}
 };
 
 struct OBB
@@ -39,19 +45,30 @@ struct OBB
 	math::Vector3D position;
 	math::Vector3D size;
 	math::Matrix3  orientation;
+	math::Vector3D color;
 
-	OBB() : size(1.f, 1.f, 1.f) {}
-	OBB(const math::Vector3D& p, const math::Vector3D& s) : position(p), size(s){}
-	OBB(const math::Vector3D& p, const math::Vector3D& s, const math::Matrix3& o) : position(p), size(s), orientation(o){}
+	OBB() 
+		: size(1.f, 1.f, 1.f) {}
+	OBB(const math::Vector3D& p, const math::Vector3D& s) 
+		: position(p), size(s){}
+	OBB(const math::Vector3D& p, const math::Vector3D& s, const math::Matrix3& o) 
+		: position(p), size(s), orientation(o){}
+	OBB(const math::Vector3D& p, const math::Vector3D& s, const math::Matrix3& o, const math::Vector3D c) 
+		: position(p), size(s), orientation(o), color(c){}
 };
 
 struct Sphere
 {
 	math::Vector3D position;
 	float          radius;
+	math::Vector3D color;
 
-	Sphere() : radius(5) {}
-	Sphere(const math::Vector3D& pos, float r) : position(pos), radius(r){}
+	Sphere() 
+		: radius(5) {}
+	Sphere(const math::Vector3D& pos, float r)
+		: position(pos), radius(r){}
+	Sphere(const math::Vector3D& pos, float r, const math::Vector3D c)
+		: position(pos), radius(r), color(c){}
 };
 
 struct Interval 
