@@ -23,6 +23,29 @@ HDC			hDC=NULL;		// Private GDI Device Context
 #define VK_S 0x53
 #define VK_D 0x44
 #define VK_A 0x41
+#define VK_R 0x52
+#define VK_N 0x4E
+#define VK_P 0x50
+#define VK_U 0x55
+#define VK_J 0x4A
+#define VK_I 0x49
+#define VK_K 0x4B
+#define VK_T 0x54
+#define VK_B 0x42
+#define VK_O 0x4F
+#define VK_L 0x4C
+
+#define VK_0 0x30
+#define VK_1 0x31
+#define VK_2 0x32
+#define VK_3 0x33
+#define VK_4 0x34
+#define VK_5 0x35
+#define VK_6 0x36
+#define VK_7 0x37
+#define VK_8 0x38
+#define VK_9 0x39
+
 
 LRESULT CALLBACK WindowProc(HWND hwnd, 
 	UINT msg, 
@@ -76,6 +99,46 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				break;
 			case VK_DOWN:
 				game->camera->ProcessKeyboard(BACKWARD);
+				break;
+			case VK_1:
+				// add ball
+				break;
+			case VK_2:
+				// add cube
+				break;
+			case VK_R:
+				// reset
+				game->LoadBoard();
+				break;
+			case VK_N:
+				// toggle net on/off
+				break;
+			case VK_P:
+				// pause
+				break;
+			case VK_U:
+				// increase time scale
+				break;
+			case VK_J:
+				// decrease time scale
+				break;
+			case VK_I:
+				// increase friction 
+				break;
+			case VK_K:
+				// decrease friction (min 0)
+				break;
+			case VK_T:
+				// increase ball size (max 0.9)
+				break;
+			case VK_B:
+				// decrease ball size
+				break;
+			case VK_O:
+				// increase elaticity (0.1 to 1.0)
+				break;
+			case VK_L:
+				// decrease elaticity (0.1 to 1.0)
 				break;
 			}
 			break;

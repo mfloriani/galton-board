@@ -24,6 +24,8 @@ public:
 	static RigidBody* CreateAABB(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size, math::Vector3D color);
 	static RigidBody* CreateOBB(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size, math::Vector3D angles, math::Vector3D color);
 
+	void LoadBoard();
+
 private:
 	HDC   m_hdc;
 	float m_dt;
@@ -37,6 +39,7 @@ private:
 	void AddBalls();
 	void AddPegs();
 	void AddBins();
+	
 
 
 };

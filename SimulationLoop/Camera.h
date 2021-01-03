@@ -13,7 +13,7 @@ enum Camera_Movement
     RIGHT
 };
 
-const float SPEED = 2.5f;
+const float SPEED = 5.5f;
 
 class Camera
 {
@@ -56,10 +56,8 @@ public:
             Position -= Up * velocity;
         if (direction == LEFT)
             Position -= Right * velocity;
-            //Position -= (Front.cross(Up)).normalize() * velocity;
         if (direction == RIGHT)
             Position += Right * velocity;
-            //Position += (Front.cross(Up)).normalize() * velocity;
     }
 
     math::Matrix4& UpdateView()

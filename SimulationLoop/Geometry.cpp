@@ -1,6 +1,8 @@
 #include "Geometry.h"
 #include "TextureLoader.h"
 
+
+
 math::Vector3D ClosestPoint(const Plane& plane, const math::Vector3D& point)
 {
 	const float dot = plane.normal.dot(point);
@@ -197,6 +199,158 @@ bool SphereOBB(const Sphere& sphere, const OBB& obb)
 	return distSq < radiusSq;
 }
 
+float LengthSq(const Line& line) 
+{
+	return (line.start - line.end).sizeSqr();
+}
+
+bool Linetest(const OBB& obb, const Line& line) 
+{
+	if ((line.end - line.start).sizeSqr() < 0.0000001f) 
+		return PointInOBB(line.start, obb);
+
+	Ray ray;
+	ray.origin = line.start;
+	ray.direction = math::normalize(line.end - line.start);
+	RaycastResult result;
+	if (!Raycast(obb, ray, &result))
+		return false;
+
+	float t = result.t;
+
+	return t >= 0 && t * t <= LengthSq(line);
+}
+
+void ResetRaycastResult(RaycastResult* outResult) {
+	if (outResult != 0) 
+	{
+		outResult->t = -1;
+		outResult->hit = false;
+		outResult->normal = math::Vector3D(0, 0, 1);
+		outResult->point = math::Vector3D(0, 0, 0);
+	}
+}
+
+bool Raycast(const OBB& obb, const Ray& ray, RaycastResult* outResult) 
+{
+	ResetRaycastResult(outResult);
+
+	float o[] = {
+		obb.orientation.a(), obb.orientation.b(), obb.orientation.c(),
+		obb.orientation.d(), obb.orientation.e(), obb.orientation.f(),
+		obb.orientation.g(), obb.orientation.h(), obb.orientation.k()
+	};
+
+	float size[] = { obb.size.x, obb.size.y, obb.size.z };
+
+	math::Vector3D p = obb.position - ray.origin;
+
+	math::Vector3D X(o[0], o[1], o[2]);
+	math::Vector3D Y(o[3], o[4], o[5]);
+	math::Vector3D Z(o[6], o[7], o[8]);
+
+	math::Vector3D f(
+		X.dot(ray.direction),
+		Y.dot(ray.direction),
+		Z.dot(ray.direction)
+	);
+
+	math::Vector3D e(
+		X.dot(p),
+		Y.dot(p),
+		Z.dot(p)
+	);
+
+#if 1
+	float t[6] = { 0, 0, 0, 0, 0, 0 };
+	for (int i = 0; i < 3; ++i) {
+		if (CMP(f[i], 0)) {
+			if (-e[i] - size[i] > 0 || -e[i] + size[i] < 0) {
+				return false;
+			}
+			f[i] = 0.00001f; // Avoid div by 0!
+		}
+
+		t[i * 2 + 0] = (e[i] + size[i]) / f[i]; // tmin[x, y, z]
+		t[i * 2 + 1] = (e[i] - size[i]) / f[i]; // tmax[x, y, z]
+	}
+
+	float tmin = fmaxf(fmaxf(fminf(t[0], t[1]), fminf(t[2], t[3])), fminf(t[4], t[5]));
+	float tmax = fminf(fminf(fmaxf(t[0], t[1]), fmaxf(t[2], t[3])), fmaxf(t[4], t[5]));
+#else 
+	// The above loop simplifies the below if statements
+	// this is done to make sure the sample fits into the book
+	if (CMP(f.x, 0)) {
+		if (-e.x - obb.size.x > 0 || -e.x + obb.size.x < 0) {
+			return -1;
+		}
+		f.x = 0.00001f; // Avoid div by 0!
+	}
+	else if (CMP(f.y, 0)) {
+		if (-e.y - obb.size.y > 0 || -e.y + obb.size.y < 0) {
+			return -1;
+		}
+		f.y = 0.00001f; // Avoid div by 0!
+	}
+	else if (CMP(f.z, 0)) {
+		if (-e.z - obb.size.z > 0 || -e.z + obb.size.z < 0) {
+			return -1;
+		}
+		f.z = 0.00001f; // Avoid div by 0!
+	}
+
+	float t1 = (e.x + obb.size.x) / f.x;
+	float t2 = (e.x - obb.size.x) / f.x;
+	float t3 = (e.y + obb.size.y) / f.y;
+	float t4 = (e.y - obb.size.y) / f.y;
+	float t5 = (e.z + obb.size.z) / f.z;
+	float t6 = (e.z - obb.size.z) / f.z;
+
+	float tmin = fmaxf(fmaxf(fminf(t1, t2), fminf(t3, t4)), fminf(t5, t6));
+	float tmax = fminf(fminf(fmaxf(t1, t2), fmaxf(t3, t4)), fmaxf(t5, t6));
+#endif
+
+	// if tmax < 0, ray is intersecting AABB
+	// but entire AABB is behing it's origin
+	if (tmax < 0) {
+		return false;
+	}
+
+	// if tmin > tmax, ray doesn't intersect AABB
+	if (tmin > tmax) {
+		return false;
+	}
+
+	// If tmin is < 0, tmax is closer
+	float t_result = tmin;
+
+	if (tmin < 0.0f) {
+		t_result = tmax;
+	}
+
+	if (outResult != 0) {
+		outResult->hit = true;
+		outResult->t = t_result;
+		outResult->point = ray.origin + ray.direction * t_result;
+
+		math::Vector3D normals[] = {
+			X,			// +x
+			X * -1.0f,	// -x
+			Y,			// +y
+			Y * -1.0f,	// -y
+			Z,			// +z
+			Z * -1.0f	// -z
+		};
+
+		for (int i = 0; i < 6; ++i) {
+			if (CMP(t_result, t[i])) {
+				outResult->normal = math::normalize(normals[i]);
+			}
+		}
+	}
+	return true;
+}
+
 #if 0
 
 Interval GetInterval(const OBB& obb, const math::Vector3D& axis) 
@@ -277,8 +431,8 @@ bool ClipToPlane(const Plane& plane, const Line& line, math::Vector3D* outPoint)
 
 float PenetrationDepth(const OBB& o1, const OBB& o2, math::Vector3D& axis, bool* outShouldFlip)
 {
-	Interval i1 = GetInterval(o1, axis.normalize());
-	Interval i2 = GetInterval(o2, axis.normalize());
+	Interval i1 = GetInterval(o1, math::normalize(axis));
+	Interval i2 = GetInterval(o2, math::normalize(axis));
 
 	if (!((i2.min <= i1.max) && (i1.min <= i2.max))) 
 		return 0.0f; // No penerattion

@@ -12,60 +12,67 @@ RigidBody::~RigidBody()
 {
 }
 
-inline float RigidBody::InverseMass()
-{
-	if (mass == 0.0f)
-		return 0.0f;
-	return 1.0f / mass;
-}
-
 void RigidBody::ApplyForces()
 {
 	m_forces = math::Vector3D(0.0f, GRAVITY * mass, 0.f);
 }
 
+
+
 void RigidBody::Update(float dt)
-{
-	
-	
-	// Calculate acceleration
+{	
+#ifdef EULER_INTEGRATION
+	oldPosition = position;	
 	math::Vector3D accel = m_forces * InverseMass();
 
-	// Integrate accel to get the velocity (using Euler)
-	velocity = velocity + accel * dt;
-	velocity = velocity * DAMPING;
-
-	if (fabsf(velocity.x) < 0.001f)
-		velocity.x = 0.0f;
-	if (fabsf(velocity.y) < 0.001f) 
-		velocity.y = 0.0f;
-	if (fabsf(velocity.z) < 0.001f) 
-		velocity.z = 0.0f;
-
-#ifdef ENABLE_ANGULAR
-
-	if (type == VolumeType::OBB)
-	{
-		math::Vector3D angAccel = math::multiplyVector(m_torques, InverseTensor());
-		angularVel += angAccel * dt;
-		angularVel *= damping;
-
-		if (fabsf(angularVel.x) < 0.001f)
-			angularVel.x = 0.0f;
-		if (fabsf(angularVel.y) < 0.001f) 
-			angularVel.y = 0.0f;
-		if (fabsf(angularVel.z) < 0.001f)
-			angularVel.z = 0.0f;
-	}
-#endif
-
-	// Integrate old velocity to get the new position (using Euler)
+#ifdef ACCURATE_EULER_INTEGRATION // Velocity Verlet Integration
+	math::Vector3D oldVelocity = velocity;
+	velocity = velocity * DAMPING + accel * dt;
+	position = position + (oldVelocity + velocity) * 0.5f * dt;
+#else
+	velocity = velocity * DAMPING + accel * dt;
 	position = position + velocity * dt;
-
-#ifdef ENABLE_ANGULAR
-	if (type == VolumeType::OBB)
-		orientation += angularVel * dt;
 #endif
+
+#else 
+
+	math::Vector3D vel = position - oldPosition;
+	oldPosition = position;
+	const float dtSq = dt * dt;
+	position = position + (vel * DAMPING + m_forces * dtSq);
+
+#endif
+
+	//if (fabsf(velocity.x) < 0.001f)
+	//	velocity.x = 0.0f;
+	//if (fabsf(velocity.y) < 0.001f) 
+	//	velocity.y = 0.0f;
+	//if (fabsf(velocity.z) < 0.001f) 
+	//	velocity.z = 0.0f;
+
+//#ifdef ENABLE_ANGULAR
+//
+//	if (type == VolumeType::OBB)
+//	{
+//		math::Vector3D angAccel = math::multiplyVector(m_torques, InverseTensor());
+//		angularVel += angAccel * dt;
+//		angularVel *= damping;
+//
+//		if (fabsf(angularVel.x) < 0.001f)
+//			angularVel.x = 0.0f;
+//		if (fabsf(angularVel.y) < 0.001f) 
+//			angularVel.y = 0.0f;
+//		if (fabsf(angularVel.z) < 0.001f)
+//			angularVel.z = 0.0f;
+//	}
+//#endif
+//
+//	
+//
+//#ifdef ENABLE_ANGULAR
+//	if (type == VolumeType::OBB)
+//		orientation += angularVel * dt;
+//#endif
 
 	SyncCollisionVolumes();
 }
@@ -128,8 +135,44 @@ math::Matrix4 RigidBody::InverseTensor()
 void RigidBody::AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse)
 {
 	math::Vector3D centerOfMass = position;
-	math::Vector3D torque = (point - centerOfMass).cross(impulse);
+	math::Vector3D torque = math::cross((point - centerOfMass),impulse);
 	math::Vector3D angAccel = math::multiplyVector(torque, InverseTensor());
 	angularVel += angAccel;
+}
+
+
+void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
+{
+	int size = constraints.size();
+	for (int i = 0; i < size; ++i) 
+	{
+		Line traveled(oldPosition, position);
+		if (Linetest(constraints[i], traveled)) 
+		{
+#ifndef EULER_INTEGRATION
+			math::Vector3D velocity = position - oldPosition;
+#endif
+			math::Vector3D direction = math::normalize(velocity);
+			Ray ray(oldPosition, direction);
+			RaycastResult result;
+
+			if (Raycast(constraints[i], ray, &result)) 
+			{
+				// Place object just a little above collision result
+				position = result.point + result.normal * 0.003f;
+
+				math::Vector3D vn = result.normal * result.normal.dot(velocity);
+				math::Vector3D vt = velocity - vn;
+
+#ifdef EULER_INTEGRATION
+				oldPosition = position;
+				velocity = vt - vn * restitution;
+#else
+				oldPosition = position - (vt - vn * bounce);
+#endif
+				break;
+			}
+		}
+	}
 }
 

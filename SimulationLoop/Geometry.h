@@ -87,6 +87,28 @@ struct Line
 		start(s), end(e) { }
 };
 
+struct Ray 
+{
+	math::Vector3D origin;
+	math::Vector3D direction;
+
+	inline Ray() : direction(0.0f, 0.0f, 1.0f) {}
+	inline Ray(const math::Vector3D& o, const math::Vector3D& d) :
+		origin(o), direction(d) {
+		NormalizeDirection();
+	}
+	inline void NormalizeDirection() {
+		math::normalize(direction);
+	}
+};
+
+struct RaycastResult 
+{
+	math::Vector3D point;
+	math::Vector3D normal;
+	float t;
+	bool hit;
+};
 
 math::Vector3D GetMin(const AABB& aabb);
 math::Vector3D GetMax(const AABB& aabb);
@@ -113,6 +135,20 @@ bool SphereAABB(const Sphere& sphere, const AABB& aabb);
 
 bool SphereOBB(const Sphere& sphere, const OBB& obb);
 #define OBBSphere(obb, sphere) SphereOBB(sphere, obb)
+
+
+bool Linetest(const OBB& obb, const Line& line);
+
+bool Raycast(const OBB& obb, const Ray& ray, RaycastResult* outResult);
+
+
+
+
+
+
+
+
+
 
 #if 0
 

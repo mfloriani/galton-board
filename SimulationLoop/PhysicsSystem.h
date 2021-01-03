@@ -11,15 +11,22 @@ public:
 	void Update(float dt);
 
 	void AddRigidBody(RigidBody* body);
+	void AddConstraint(OBB& constraint);
+	
 	void ClearRigidBodies();
+	void ClearConstraints();
+
+	void Reset();
 
 	const std::vector<RigidBody*>& Bodies() const { return m_bodies; }
+	const std::vector<OBB>& Constraints() const { return m_constraints; }
 
 private:
 	std::vector<RigidBody*>    m_bodies;
 	std::vector<RigidBody*>    m_collidersA;
 	std::vector<RigidBody*>    m_collidersB;
 	std::vector<ManifoldPoint> m_results;
+	std::vector<OBB>           m_constraints;
 
 	// Smaller = more accurate [0.01 to 0.1] 
 	float m_penetrationSlack{ 0.01f };

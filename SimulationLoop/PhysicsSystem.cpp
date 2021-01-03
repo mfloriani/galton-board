@@ -66,9 +66,10 @@ void PhysicsSystem::Update(float dt)
 	// Linear projection to avoid sinking
 	AvoidSinking();
 	
-	// TODO: implement constraints chapter 14
-	//for (auto body : m_bodies)
-	//	body->SolveConstraints(m_constraints);
+	for (auto body : m_bodies)
+		body->SolveConstraints(m_constraints);
+
+
 }
 
 void PhysicsSystem::AddRigidBody(RigidBody* body)
@@ -77,12 +78,28 @@ void PhysicsSystem::AddRigidBody(RigidBody* body)
 	m_bodies.push_back(body);
 }
 
+void PhysicsSystem::AddConstraint(OBB& constraint)
+{
+	m_constraints.push_back(constraint);
+}
+
 void PhysicsSystem::ClearRigidBodies()
 { 
 	for (auto b : m_bodies)
 		delete b;
 
 	m_bodies.clear();
+}
+
+void PhysicsSystem::ClearConstraints()
+{
+	m_constraints.clear();
+}
+
+void PhysicsSystem::Reset()
+{
+	ClearRigidBodies();
+	ClearConstraints();
 }
 
 
@@ -127,7 +144,7 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 #endif
 
 #ifdef ENABLE_ANGULAR
-	math::Vector3D relativeVel = (B.velocity + B.angularVel.cross(r2)) - (A.velocity + A.angularVel.cross(r1));
+	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
 #else
 	math::Vector3D relativeVel = B.velocity - A.velocity;
 #endif
@@ -144,8 +161,8 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	float numerator = -(1.0f + e) * relativeDir;
 	float d1 = invMassSum;
 #ifdef ENABLE_ANGULAR
-	math::Vector3D d2 = (math::multiplyVector(r1.cross(relativeNormal), i1)).cross(r1);
-	math::Vector3D d3 = (math::multiplyVector(r2.cross(relativeNormal), i2)).cross(r2);
+	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
+	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
 	float denominator = d1 + relativeNormal.dot(d2 + d3);
 #else
 	float denominator = d1;
@@ -160,9 +177,10 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	B.velocity = B.velocity + impulse * invMassB;
 
 #ifdef ENABLE_ANGULAR
-	A.angularVel -= math::multiplyVector(r1.cross(impulse), i1);
-	B.angularVel += math::multiplyVector(r2.cross(impulse), i2);
+	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
+	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
 #endif
+	
 	//
 	// Friction
 	//
@@ -176,8 +194,8 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	numerator = -relativeVel.dot(t);
 	d1 = invMassSum;
 #ifdef ENABLE_ANGULAR
-	d2 = (math::multiplyVector(r1.cross(t), i1)).cross(r1);
-	d3 = (math::multiplyVector(r2.cross(t), i2)).cross(r2);
+	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
+	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
 	denominator = d1 + t.dot(d2 + d3);
 #else
 	denominator = d1;
@@ -203,8 +221,8 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	A.velocity = A.velocity - tangentImpulse * invMassA;
 	B.velocity = B.velocity + tangentImpulse * invMassB;
 #ifdef ENABLE_ANGULAR
-	A.angularVel -= math::multiplyVector(r1.cross(tangentImpulse), i1);
-	B.angularVel -= math::multiplyVector(r2.cross(tangentImpulse), i2);
+	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
+	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
 #endif
 }
 
@@ -319,11 +337,11 @@ ManifoldPoint PhysicsSystem::CheckCollision(const OBB& A, const Sphere& B)
 				return result;
 
 			// Closest point is at the center of the sphere
-			normal = (closestPoint - A.position).normalize();
+			normal = math::normalize(closestPoint - A.position);
 		}
 		else 
 		{
-			normal = (B.position - closestPoint).normalize();
+			normal = math::normalize(B.position - closestPoint);
 		}
 
 		math::Vector3D outsidePoint = B.position - normal * B.radius;
@@ -366,9 +384,9 @@ ManifoldPoint PhysicsSystem::CheckCollision(const OBB& A, const OBB& B)
 
 	for (int i = 0; i < 3; ++i) 
 	{
-		test[6 + i * 3 + 0] = test[i].cross(test[0]);
-		test[6 + i * 3 + 1] = test[i].cross(test[1]);
-		test[6 + i * 3 + 2] = test[i].cross(test[2]);
+		test[6 + i * 3 + 0] = math::cross(test[i], test[0]);
+		test[6 + i * 3 + 1] = math::cross(test[i], test[1]);
+		test[6 + i * 3 + 2] = math::cross(test[i], test[2]);
 	}
 
 	math::Vector3D* hitNormal = 0;
@@ -398,7 +416,7 @@ ManifoldPoint PhysicsSystem::CheckCollision(const OBB& A, const OBB& B)
 	if (hitNormal == 0)
 		return result;
 
-	math::Vector3D axis = (*hitNormal).normalize();
+	math::Vector3D axis = math::normalize((*hitNormal));
 
 	std::vector<math::Vector3D> c1 = ClipEdgesToOBB(GetEdges(B), A);
 	std::vector<math::Vector3D> c2 = ClipEdgesToOBB(GetEdges(A), B);
