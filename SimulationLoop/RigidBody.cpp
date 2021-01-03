@@ -1,8 +1,7 @@
 #include "RigidBody.h"
+#include "Game.h"
 
 #define GRAVITY -9.81f
-//#define DAMPING 0.98f // air friction 
-#define DAMPING 1.f 
 
 RigidBody::RigidBody()
 {	
@@ -27,7 +26,7 @@ void RigidBody::Update(float dt)
 
 #ifdef ACCURATE_EULER_INTEGRATION // Velocity Verlet Integration
 	math::Vector3D oldVelocity = velocity;
-	velocity = velocity * DAMPING + accel * dt;
+	velocity = velocity * (1.f - friction) + accel * dt;
 	position = position + (oldVelocity + velocity) * 0.5f * dt;
 #else
 	velocity = velocity * DAMPING + accel * dt;

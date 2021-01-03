@@ -21,6 +21,10 @@ public:
 	const std::vector<RigidBody*>& Bodies() const { return m_bodies; }
 	const std::vector<OBB>& Constraints() const { return m_constraints; }
 
+	void UpdateBallSize(float ballSize);
+	void UpdateRestitution(float restitution);
+	void UpdateFriction(float friction);
+
 private:
 	std::vector<RigidBody*>    m_bodies;
 	std::vector<RigidBody*>    m_collidersA;

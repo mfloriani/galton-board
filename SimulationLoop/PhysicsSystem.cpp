@@ -102,6 +102,23 @@ void PhysicsSystem::Reset()
 	ClearConstraints();
 }
 
+void PhysicsSystem::UpdateBallSize(float ballSize)
+{
+	for (auto b : m_bodies)
+		b->sphereVolume.radius = ballSize;
+}
+
+void PhysicsSystem::UpdateRestitution(float restitution)
+{
+	for (auto b : m_bodies)
+		b->restitution = restitution;
+}
+
+void PhysicsSystem::UpdateFriction(float friction)
+{
+	for (auto b : m_bodies)
+		b->friction = friction;
+}
 
 void PhysicsSystem::AvoidSinking()
 {

@@ -4,13 +4,20 @@
 #include <random>
 #include<time.h>
 
-#define BALL_SIZE  0.5f
 #define BALL_TOTAL 100
 #define BALL_MASS  1.f
 
 #define BLACK math::Vector3D(0.f, 0.f, 0.f)
 #define WHITE math::Vector3D(1.f, 1.f, 1.f)
 #define GRAY  math::Vector3D(0.5f, 0.5f, 0.5f)
+
+#define FRICTION_MAG_DEFAULT 0.f
+#define RESTITUTION_MAG_DEFAULT 0.1f
+#define BALL_SIZE_DEFAULT 0.5f
+
+float Game::frictionMag = FRICTION_MAG_DEFAULT;
+float Game::restitutionMag = RESTITUTION_MAG_DEFAULT;
+float Game::ballSize = BALL_SIZE_DEFAULT;
 
 Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 {
@@ -22,7 +29,7 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 	
 	srand(time(0));
 
-	LoadBoard();
+	ResetBoard();
 	
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
@@ -47,7 +54,10 @@ void Game::Update()
 
 	m_fps = static_cast<int>(1.0 / m_dt);
 
-	m_physicsSys->Update(m_dt);
+	m_dt *= m_timeScale;
+
+	if(!m_paused)
+		m_physicsSys->Update(m_dt);
 
 	//for (auto b : m_physicsSys->Bodies()) 
 	//{
@@ -79,40 +89,18 @@ void Game::Render()
 	SwapBuffers(m_hdc);
 }
 
-RigidBody* Game::CreateSphere(math::Vector3D pos, math::Vector3D vel, float mass, float radius, math::Vector3D color)
+RigidBody* Game::CreateBall(math::Vector3D pos)
 {
 	RigidBody* body = new RigidBody();
 	body->position = pos;
-	body->velocity = vel;
-	body->mass = mass;
+	//body->velocity = vel;
+	body->mass = BALL_MASS;
+	body->friction = frictionMag;
+	body->restitution = restitutionMag;
 	body->type = VolumeType::Sphere;
-	body->sphereVolume = Sphere(pos, radius, color);
+	body->sphereVolume = Sphere(pos, ballSize, WHITE);
 	return body;
 }
-
-//RigidBody* Game::CreateAABB(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size, math::Vector3D color)
-//{
-//	RigidBody* body = new RigidBody();
-//	body->position = pos;
-//	body->velocity = vel;
-//	body->mass = mass;
-//	body->type = VolumeType::AABB;
-//	body->aabbVolume = AABB(pos, size, color);
-//	return body;
-//}
-//
-//RigidBody* Game::CreateOBB(math::Vector3D pos, math::Vector3D vel, float mass, math::Vector3D size, math::Vector3D angles, math::Vector3D color)
-//{
-//	RigidBody* body = new RigidBody();
-//	body->position = pos;
-//	body->velocity = vel;
-//	body->mass = mass;
-//	body->type = VolumeType::OBB;
-//	body->obbVolume = OBB(pos, size, math::rotation3x3(angles.x, angles.y, angles.z), color);
-//	return body;
-//}
-
-
 
 void Game::AddPegs()
 {
@@ -138,16 +126,6 @@ void Game::AddPegs()
 						PEG_COLOR)
 				);
 			}
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-16, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-12, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-8, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-4, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(0, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(4, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(8, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(12, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(16, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-
 		}
 		else
 		{
@@ -160,17 +138,6 @@ void Game::AddPegs()
 						PEG_COLOR)
 				);
 			}
-			
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-18, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-14, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-10, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-6, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(-2, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(2, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(6, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(10, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(14, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
-			//m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(18, PEG_Y, PEG_Z), math::Vector3D(0, 0, 0), 0, 1.f, PEG_COLOR));
 		}
 	}
 }
@@ -191,7 +158,19 @@ void Game::AddBins()
 	}
 }
 
-void Game::AddBalls()
+void Game::SpawnBall()
+{
+	int x = rand() % 10;
+	int y = rand() % 10;
+
+	x = m_physicsSys->Bodies().size() % 2 == 0 ? x : -x;
+
+	m_physicsSys->AddRigidBody(
+		CreateBall(math::Vector3D(x, 40 + y, 0))
+	);
+}
+
+void Game::SpawnBalls()
 {
 	for (int i = 0; i < BALL_TOTAL; ++i)
 	{
@@ -200,15 +179,23 @@ void Game::AddBalls()
 
 		x = i % 2 == 0 ? x : -x;
 
-		m_physicsSys->AddRigidBody(CreateSphere(math::Vector3D(x, 40 + y, 0), math::Vector3D(0, 0, 0), BALL_MASS, BALL_SIZE, WHITE));
+		m_physicsSys->AddRigidBody(
+			CreateBall(math::Vector3D(x, 40 + y, 0))
+		);
 	}
 }
 
-void Game::LoadBoard()
+void Game::ResetBoard()
 {
+	m_paused = false;
+	m_timeScale = 1.f;
+	frictionMag = FRICTION_MAG_DEFAULT;
+	restitutionMag = RESTITUTION_MAG_DEFAULT;
+	ballSize = BALL_SIZE_DEFAULT;
+
 	m_physicsSys->Reset();
 
-	AddBalls();
+	SpawnBalls();
 	AddPegs();
 	AddBins();
 
@@ -264,4 +251,62 @@ void Game::LoadBoard()
 			BLACK)
 	);
 
+}
+
+void Game::PauseResume()
+{
+	m_paused = !m_paused;
+}
+
+void Game::IncreaseTimeScale()
+{
+	m_timeScale += TIME_SCALE_RATE;
+}
+
+void Game::DecreaseTimeScale()
+{
+	m_timeScale -= TIME_SCALE_RATE;
+	if (m_timeScale < 0.1f) m_timeScale = 0.1f;
+}
+
+void Game::IncreaseFriction()
+{
+	frictionMag += FRICTION_RATE;
+	if (frictionMag > 1.f) frictionMag = 1.f;
+	m_physicsSys->UpdateFriction(frictionMag);
+}
+
+void Game::DecreaseFriction()
+{
+	frictionMag -= FRICTION_RATE;
+	if (frictionMag < 0.f) frictionMag = 0.f;
+	m_physicsSys->UpdateFriction(frictionMag);
+}
+
+void Game::IncreaseBallSize()
+{
+	ballSize += BALL_SIZE_RATE;
+	if (ballSize > 0.9f) ballSize = 0.9f;
+	m_physicsSys->UpdateBallSize(ballSize);
+}
+
+void Game::DecreaseBallSize()
+{
+	ballSize -= BALL_SIZE_RATE;
+	if (ballSize < 0.1f) ballSize = 0.1f;
+	m_physicsSys->UpdateBallSize(ballSize);
+}
+
+void Game::IncreaseRestitution()
+{
+	restitutionMag += RESTORATION_RATE;
+	if (restitutionMag > 1.0f) restitutionMag = 1.f;
+	m_physicsSys->UpdateRestitution(restitutionMag);
+}
+
+void Game::DecreaseRestitution()
+{
+	restitutionMag -= RESTORATION_RATE;
+	if (restitutionMag < 0.1f) restitutionMag = 0.1f;
+	m_physicsSys->UpdateRestitution(restitutionMag);
 }

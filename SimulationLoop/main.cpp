@@ -102,43 +102,53 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				break;
 			case VK_1:
 				// add ball
+				game->SpawnBall();
 				break;
 			case VK_2:
 				// add cube
 				break;
 			case VK_R:
 				// reset
-				game->LoadBoard();
+				game->ResetBoard();
 				break;
 			case VK_N:
 				// toggle net on/off
 				break;
 			case VK_P:
 				// pause
+				game->PauseResume();
 				break;
 			case VK_U:
 				// increase time scale
+				game->IncreaseTimeScale();
 				break;
 			case VK_J:
 				// decrease time scale
+				game->DecreaseTimeScale();
 				break;
 			case VK_I:
 				// increase friction 
+				game->IncreaseFriction();
 				break;
 			case VK_K:
 				// decrease friction (min 0)
+				game->DecreaseFriction();
 				break;
 			case VK_T:
 				// increase ball size (max 0.9)
+				game->IncreaseBallSize();
 				break;
 			case VK_B:
 				// decrease ball size
+				game->DecreaseBallSize();
 				break;
 			case VK_O:
 				// increase elaticity (0.1 to 1.0)
+				game->IncreaseRestitution();
 				break;
 			case VK_L:
 				// decrease elaticity (0.1 to 1.0)
+				game->DecreaseRestitution();
 				break;
 			}
 			break;
