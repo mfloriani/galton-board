@@ -109,7 +109,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				break;
 			case VK_R:
 				// reset
-				game->ResetBoard();
+				game->Reset();
 				break;
 			case VK_N:
 				// toggle net on/off
@@ -149,6 +149,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 			case VK_L:
 				// decrease elaticity (0.1 to 1.0)
 				game->DecreaseRestitution();
+				break;
+			case VK_F1:
+				game->ToggleDebugMode();
 				break;
 			}
 			break;

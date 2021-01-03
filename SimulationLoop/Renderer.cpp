@@ -31,8 +31,15 @@ void Renderer::DrawAABBCube(const AABB& c)
     glDisable(GL_TEXTURE_2D);
 
     glPushMatrix();
-    glScalef(c.size.x, c.size.y, c.size.z);
-    glTranslatef(c.position.x, c.position.y, c.position.z);
+    //glScalef(c.size.x, c.size.y, c.size.z);
+    //glTranslatef(c.position.x, c.position.y, c.position.z);
+
+    math::Matrix4 scale = math::scale(c.size);
+    math::Matrix4 translation = math::translation(c.position);
+
+    math::Matrix4 transform = scale * translation;
+
+    glMultMatrixf(transform.data());
 
     glColor3f(c.color.x, c.color.y, c.color.z);
 

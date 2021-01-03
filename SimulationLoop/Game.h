@@ -24,13 +24,16 @@ public:
 	static float frictionMag;
 	static float restitutionMag;
 	static float ballSize;
+	static bool  debugMode;
 
 	void Update();
 	void Render();
 
 	static RigidBody* CreateBall(math::Vector3D pos);
 	
-	void ResetBoard();
+	void Reset();
+	void Board();
+	void DebugBoard();
 	void SpawnBall();
 	void PauseResume();
 	void IncreaseTimeScale();
@@ -41,6 +44,8 @@ public:
 	void DecreaseBallSize();
 	void IncreaseRestitution();
 	void DecreaseRestitution();
+
+	void ToggleDebugMode();
 
 private:
 	HDC   m_hdc;

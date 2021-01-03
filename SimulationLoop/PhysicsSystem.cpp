@@ -246,30 +246,40 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody& B)
 {
 	ManifoldPoint result;
+	// check here only sphere x sphere collisions
+	result = CheckCollision(A.sphereVolume, B.sphereVolume);
 
-	if (A.type == VolumeType::Sphere)
-	{
-		if (B.type == VolumeType::Sphere)
-		{
-			result = CheckCollision(A.sphereVolume, B.sphereVolume);
-		}
-		else if (B.type == VolumeType::AABB)
-		{
-			result = CheckCollision(B.aabbVolume, A.sphereVolume);
-		}
-		else if (B.type == VolumeType::OBB)
-		{
-			result = CheckCollision(B.obbVolume, A.sphereVolume);
-			result.normal = result.normal * -1.0f;
-		}
-	}
+	//if (A.type == VolumeType::Sphere)
+	//{
+	//	if (B.type == VolumeType::Sphere)
+	//	{
+	//		result = CheckCollision(A.sphereVolume, B.sphereVolume);
+	//	}
+		//else if (B.type == VolumeType::AABB)
+		//{
+		//	result = CheckCollision(B.aabbVolume, A.sphereVolume);
+		//}
+		//else if (B.type == VolumeType::OBB)
+		//{
+		//	result = CheckCollision(B.obbVolume, A.sphereVolume);
+		//	result.normal = result.normal * -1.0f;
+		//}
+	//}
 	//else if (A.type == VolumeType::OBB)
 	//{
-	//	if (B.type == VolumeType::OBB)
+	//	//if (B.type == VolumeType::OBB)
+	//	//{
+	//	//	result = CheckCollision(A.obbVolume, B.obbVolume);
+	//	//}
+	//	//else 
+	//	if (B.type == VolumeType::Sphere)
 	//	{
-	//		result = CheckCollision(A.obbVolume, B.obbVolume);
+	//		result = CheckCollision(A.obbVolume, B.sphereVolume);
 	//	}
-	//	else if (B.type == VolumeType::Sphere)
+	//}
+	//else if (A.type == VolumeType::AABB)
+	//{
+	//	if (B.type == VolumeType::Sphere)
 	//	{
 	//		result = CheckCollision(A.obbVolume, B.sphereVolume);
 	//	}
