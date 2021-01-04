@@ -68,8 +68,6 @@ void PhysicsSystem::Update(float dt)
 	
 	for (auto body : m_bodies)
 		body->SolveConstraints(m_constraints);
-
-
 }
 
 void PhysicsSystem::AddRigidBody(RigidBody* body)
@@ -153,18 +151,18 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	if (invMassSum == 0.0f)
 		return;
 
-#ifdef ENABLE_ANGULAR
-	math::Vector3D r1 = P.contacts[c] - A.position;
-	math::Vector3D r2 = P.contacts[c] - B.position;
-	math::Matrix4 i1 = A.InverseTensor();
-	math::Matrix4 i2 = B.InverseTensor();
-#endif
+//#ifdef ENABLE_ANGULAR
+//	math::Vector3D r1 = P.contacts[c] - A.position;
+//	math::Vector3D r2 = P.contacts[c] - B.position;
+//	math::Matrix4 i1 = A.InverseTensor();
+//	math::Matrix4 i2 = B.InverseTensor();
+//#endif
 
-#ifdef ENABLE_ANGULAR
-	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
-#else
+//#ifdef ENABLE_ANGULAR
+//	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
+//#else
 	math::Vector3D relativeVel = B.velocity - A.velocity;
-#endif
+//#endif
 	math::Vector3D relativeNormal = P.normal;
 	relativeNormal = relativeNormal.normalize();
 
@@ -177,13 +175,13 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	const float e = fminf(A.restitution, B.restitution);
 	float numerator = -(1.0f + e) * relativeDir;
 	float d1 = invMassSum;
-#ifdef ENABLE_ANGULAR
-	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
-	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
-	float denominator = d1 + relativeNormal.dot(d2 + d3);
-#else
+//#ifdef ENABLE_ANGULAR
+//	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
+//	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
+//	float denominator = d1 + relativeNormal.dot(d2 + d3);
+//#else
 	float denominator = d1;
-#endif
+//#endif
 
 	float j = denominator == 0.f ? 0.f : numerator / denominator;
 	if (P.contacts.size() > 0 && j != 0.0f)
@@ -193,11 +191,13 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	A.velocity = A.velocity - impulse * invMassA;
 	B.velocity = B.velocity + impulse * invMassB;
 
-#ifdef ENABLE_ANGULAR
-	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
-	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
-#endif
+//#ifdef ENABLE_ANGULAR
+//	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
+//	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
+//#endif
 	
+#if 0
+
 	//
 	// Friction
 	//
@@ -210,13 +210,13 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 
 	numerator = -relativeVel.dot(t);
 	d1 = invMassSum;
-#ifdef ENABLE_ANGULAR
-	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
-	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
-	denominator = d1 + t.dot(d2 + d3);
-#else
+//#ifdef ENABLE_ANGULAR
+//	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
+//	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
+//	denominator = d1 + t.dot(d2 + d3);
+//#else
 	denominator = d1;
-#endif
+//#endif
 	if (denominator == 0.f)
 		return;
 
@@ -237,10 +237,12 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	math::Vector3D tangentImpulse = t * jt;
 	A.velocity = A.velocity - tangentImpulse * invMassA;
 	B.velocity = B.velocity + tangentImpulse * invMassB;
-#ifdef ENABLE_ANGULAR
-	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
-	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
+//#ifdef ENABLE_ANGULAR
+//	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
+//	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
+//#endif
 #endif
+
 }
 
 ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody& B)
@@ -290,7 +292,7 @@ ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody&
 
 ManifoldPoint PhysicsSystem::CheckCollision(const Sphere& A, const Sphere& B)
 {
-	if (SphereSphere(A, B))
+	//if (SphereSphere(A, B))
 	{
 		ManifoldPoint result;
 
@@ -300,9 +302,9 @@ ManifoldPoint PhysicsSystem::CheckCollision(const Sphere& A, const Sphere& B)
 		if (d.sizeSqr() - r * r > 0 || d.sizeSqr() == 0.0f)
 			return result;
 
-		d = d.normalize();
 
 		const float depth = fabsf(d.size() - r) * 0.5f;
+		d = math::normalize(d);
 
 		result.colliding = true;
 		result.normal = d;

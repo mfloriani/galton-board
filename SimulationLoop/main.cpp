@@ -153,6 +153,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 			case VK_F1:
 				game->ToggleDebugMode();
 				break;
+			case VK_F2:
+				game->SpawnBall(0,0);
+				break;
 			}
 			break;
 		}

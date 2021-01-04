@@ -176,6 +176,13 @@ void Game::SpawnBall()
 	);
 }
 
+void Game::SpawnBall(int x, int y)
+{
+	m_physicsSys->AddRigidBody(
+		CreateBall(math::Vector3D(x, y, 0))
+	);
+}
+
 void Game::SpawnBalls()
 {
 	for (int i = 0; i < BALL_TOTAL; ++i)
@@ -211,7 +218,7 @@ void Game::Board()
 
 	SpawnBalls();
 	AddPegs();
-	AddBins();
+	//AddBins();
 
 	// left funnel
 	m_physicsSys->AddConstraint(		
@@ -277,39 +284,24 @@ void Game::DebugBoard()
 
 	m_physicsSys->Reset();
 
-	SpawnBall();
+	SpawnBall(0,0);
 
+	// left
 	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -46.f, 0.f),
-			math::Vector3D(22.0f, 2.0f, 1.0f),
+		OBB(math::Vector3D(-9.0f, -3.f, 0.f),
+			math::Vector3D(1.0f, 6.0f, 1.0f),
+			math::rotation3x3(0.f, 0.f, 0.f),
+			GRAY)
+	);
+
+	// bottom
+	m_physicsSys->AddConstraint(
+		OBB(math::Vector3D(0.0f, -10.f, 0.f),
+			math::Vector3D(8.0f, 2.0f, 1.0f),
 			math::rotation3x3(0.f, 0.f, 0.f),
 			BLACK)
 	);
 
-	//RigidBody* bottom = new RigidBody();
-	//bottom->position = math::Vector3D(0.0f, -46.f, 0.f);
-	//bottom->mass = 0.f;
-	//bottom->type = VolumeType::OBB;
-
-	//OBB bottomOBB;
-	//bottomOBB.position = bottom->position;
-	//bottomOBB.size = math::Vector3D(22.0f, 2.0f, 1.0f);
-	//bottomOBB.orientation = math::rotation3x3(0.f, 0.f, 0.f);
-	//bottomOBB.color = BLACK;
-	//bottom->obbVolume = bottomOBB;
-
-	//RigidBody* bottom = new RigidBody();
-	//bottom->position = math::Vector3D(0.0f, -46.f, 0.f);
-	//bottom->mass = 0.f;
-	//bottom->type = VolumeType::AABB;
-
-	//AABB aabb;
-	//aabb.position = bottom->position;
-	//aabb.size = math::Vector3D(22.0f, 2.0f, 1.0f);
-	//aabb.color = BLACK;
-	//bottom->aabbVolume = aabb;
-
-	//m_physicsSys->AddRigidBody(bottom);
 }
 
 void Game::PauseResume()

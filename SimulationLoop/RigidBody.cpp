@@ -91,53 +91,53 @@ void RigidBody::SyncCollisionVolumes()
 #endif
 }
 
-math::Matrix4 RigidBody::InverseTensor()
-{
-	float ix = 0.f;
-	float iy = 0.f;
-	float iz = 0.f;
-	float iw = 0.f;
+//math::Matrix4 RigidBody::InverseTensor()
+//{
+//	float ix = 0.f;
+//	float iy = 0.f;
+//	float iz = 0.f;
+//	float iw = 0.f;
+//
+//	if (mass == 0.f)
+//		return math::Matrix4();
+//
+//	if (type == VolumeType::Sphere)
+//	{
+//		float r2 = sphereVolume.radius * sphereVolume.radius;
+//		float fraction = 2.f / 5.f;
+//		ix = r2 * mass * fraction;
+//		iy = r2 * mass * fraction;
+//		iz = r2 * mass * fraction;
+//		iw = 1.f;
+//	}
+//	else if (type == VolumeType::OBB)
+//	{
+//		math::Vector3D size = obbVolume.size * 2.f;
+//		float fraction = 1.f / 12.f;
+//		float x2 = size.x * size.x;
+//		float y2 = size.y * size.y;
+//		float z2 = size.z * size.z;
+//		ix = (y2 + z2) * mass * fraction;
+//		iy = (x2 + z2) * mass * fraction;
+//		iz = (x2 + y2) * mass * fraction;
+//		iw = 1.f;
+//	}
+//
+//	return math::inverse(
+//		math::Matrix4( ix, 0, 0, 0,
+//						0, iy, 0, 0,
+//						0, 0, iz, 0,
+//						0, 0, 0, iw )
+//	);
+//}
 
-	if (mass == 0.f)
-		return math::Matrix4();
-
-	if (type == VolumeType::Sphere)
-	{
-		float r2 = sphereVolume.radius * sphereVolume.radius;
-		float fraction = 2.f / 5.f;
-		ix = r2 * mass * fraction;
-		iy = r2 * mass * fraction;
-		iz = r2 * mass * fraction;
-		iw = 1.f;
-	}
-	else if (type == VolumeType::OBB)
-	{
-		math::Vector3D size = obbVolume.size * 2.f;
-		float fraction = 1.f / 12.f;
-		float x2 = size.x * size.x;
-		float y2 = size.y * size.y;
-		float z2 = size.z * size.z;
-		ix = (y2 + z2) * mass * fraction;
-		iy = (x2 + z2) * mass * fraction;
-		iz = (x2 + y2) * mass * fraction;
-		iw = 1.f;
-	}
-
-	return math::inverse(
-		math::Matrix4( ix, 0, 0, 0,
-						0, iy, 0, 0,
-						0, 0, iz, 0,
-						0, 0, 0, iw )
-	);
-}
-
-void RigidBody::AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse)
-{
-	math::Vector3D centerOfMass = position;
-	math::Vector3D torque = math::cross((point - centerOfMass),impulse);
-	math::Vector3D angAccel = math::multiplyVector(torque, InverseTensor());
-	angularVel += angAccel;
-}
+//void RigidBody::AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse)
+//{
+//	math::Vector3D centerOfMass = position;
+//	math::Vector3D torque = math::cross((point - centerOfMass),impulse);
+//	math::Vector3D angAccel = math::multiplyVector(torque, InverseTensor());
+//	angularVel += angAccel;
+//}
 
 
 void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
@@ -146,6 +146,7 @@ void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
 	for (int i = 0; i < size; ++i) 
 	{
 		Line traveled(oldPosition, position);
+		//if (PointInOBB(position, constraints[i])) 
 		if (Linetest(constraints[i], traveled)) 
 		{
 #ifndef EULER_INTEGRATION
@@ -159,6 +160,7 @@ void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
 			{
 				// Place object just a little above collision result
 				position = result.point + result.normal * 0.003f;
+				//position = result.point + result.normal * (sphereVolume.radius * 0.5f);
 
 				math::Vector3D vn = result.normal * result.normal.dot(velocity);
 				math::Vector3D vt = velocity - vn;

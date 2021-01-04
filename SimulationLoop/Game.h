@@ -35,6 +35,7 @@ public:
 	void Board();
 	void DebugBoard();
 	void SpawnBall();
+	void SpawnBall(int x, int y);
 	void PauseResume();
 	void IncreaseTimeScale();
 	void DecreaseTimeScale();
