@@ -3,11 +3,9 @@
 #include "Game.h"
 #include "Camera.h"
 #include "Math\Vector3D.h"
+#include "Constants.h"
 
 const char TITLE[] = "Window Creation";
-
-#define WND_WIDTH  800
-#define WND_HEIGHT 800
 
 Game *game;
 
@@ -18,34 +16,6 @@ HDC			hDC=NULL;		// Private GDI Device Context
 //*****************************************************************************
 
 //************************ MESSAGE HANDLER **************************
-
-#define VK_W 0x57
-#define VK_S 0x53
-#define VK_D 0x44
-#define VK_A 0x41
-#define VK_R 0x52
-#define VK_N 0x4E
-#define VK_P 0x50
-#define VK_U 0x55
-#define VK_J 0x4A
-#define VK_I 0x49
-#define VK_K 0x4B
-#define VK_T 0x54
-#define VK_B 0x42
-#define VK_O 0x4F
-#define VK_L 0x4C
-
-#define VK_0 0x30
-#define VK_1 0x31
-#define VK_2 0x32
-#define VK_3 0x33
-#define VK_4 0x34
-#define VK_5 0x35
-#define VK_6 0x36
-#define VK_7 0x37
-#define VK_8 0x38
-#define VK_9 0x39
-
 
 LRESULT CALLBACK WindowProc(HWND hwnd, 
 	UINT msg, 
@@ -313,7 +283,8 @@ int WINAPI WinMain( HINSTANCE hinstance,
 
 	game = new Game(hDC);
 
-	float dt = 1.0 / 60.0;
+	// fixed timestep
+	const float dt = 1.f / 60.f;
 
 	// enter main event loop
 	bool quit = false;

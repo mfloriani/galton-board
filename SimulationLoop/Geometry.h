@@ -5,8 +5,6 @@
 #include "Math\Matrix3.h"
 #include "Utils.h"
 
-//#define ENABLE_ANGULAR
-
 struct ManifoldPoint
 {
 	bool                        colliding{ false };

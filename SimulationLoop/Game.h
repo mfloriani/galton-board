@@ -8,13 +8,9 @@
 
 #include "PhysicsSystem.h"
 #include "Camera.h"
+#include "Constants.h"
 
-#define TIME_SCALE_RATE 0.1f
-#define FRICTION_RATE 0.1f
-#define BALL_SIZE_RATE 0.1f
-#define RESTORATION_RATE 0.1f
 
-#define BOARD_2
 
 class Game
 {
@@ -60,8 +56,6 @@ private:
 	bool  m_paused{ false };
 	float m_timeScale{ 1.f };
 	
-	
-	
 	PhysicsSystem* m_physicsSys;
 	LARGE_INTEGER start, end, frequency;
 
@@ -71,10 +65,9 @@ private:
 	void AddPegs();
 	void AddBins();
 	
-	void Board2();
-	void AddBins2();
-	
-	RigidBody* CreateAABBRigidBody(math::Vector3D pos, math::Vector3D size, math::Vector3D color);
+	RigidBody* CreateStaticSphere(math::Vector3D pos, float radius, math::Vector3D color);
+	RigidBody* CreateStaticAABB(math::Vector3D pos, math::Vector3D size, math::Vector3D color);
+	RigidBody* CreateStaticOBB(math::Vector3D pos, math::Vector3D size, math::Matrix3 orientation, math::Vector3D color);
 
 };
 
