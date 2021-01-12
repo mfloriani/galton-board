@@ -2,10 +2,7 @@
 
 #include "Geometry.h"
 #include "Math\Matrix4.h"
-
-#define EULER_INTEGRATION
-#define ACCURATE_EULER_INTEGRATION
-//#define VERLET_INTEGRATION
+#include "Constants.h"
 
 enum class VolumeType
 {
@@ -21,15 +18,19 @@ public:
 	RigidBody();
 	~RigidBody();
 	
-	inline float InverseMass() { if (mass == 0.0f) return 0.0f; return 1.0f / mass;	}
 	void Update(float dt);
 	void ApplyForces();
 	void SyncCollisionVolumes();
+	inline float InverseMass() { if (mass == 0.0f) return 0.0f; return 1.0f / mass;	}
 
+#ifdef ANGULAR_VELOCITY
 	math::Matrix4 InverseTensor();
 	void AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse);
+#endif
 
+#ifdef CONSTRAINT_BOARD
 	void SolveConstraints(const std::vector<OBB>& constraints);
+#endif
 	static void ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);
 
 public:
@@ -40,18 +41,23 @@ public:
 	math::Vector3D position;
 	math::Vector3D oldPosition;
 	
+#ifdef ANGULAR_VELOCITY
 	math::Vector3D orientation;
 	math::Vector3D angularVel;
+#endif // !ANGULAR_VELOCITY
 
 	float          mass{ 1.0f };
 	float          friction{ 0.0f };
 	float          restitution{ 0.0f };
+
 	Sphere         sphereVolume;
 	AABB           aabbVolume;
 	OBB            obbVolume;
 
 private:
 	math::Vector3D m_forces;
+#ifdef ANGULAR_VELOCITY
 	math::Vector3D m_torques;
+#endif
 
 };

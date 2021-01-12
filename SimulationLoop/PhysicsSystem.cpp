@@ -1,20 +1,20 @@
 #include "PhysicsSystem.h"
-//#include "Math\Vector3D.h"
 #include "Geometry.h"
-
-
+#include "Constants.h"
 
 PhysicsSystem::PhysicsSystem()
 {
-	m_bodies.reserve(200);
-	m_collidersA.reserve(200);
-	m_collidersB.reserve(200);
-	m_results.reserve(200);
+	m_bodies.reserve(500);
+	m_collidersA.reserve(500);
+	m_collidersB.reserve(500);
+	m_results.reserve(500);
+	m_staticBodies.reserve(500);
 }
 
 PhysicsSystem::~PhysicsSystem()
 {
 	ClearRigidBodies();
+	ClearStaticRigidBodies();
 }
 
 void PhysicsSystem::Update(float dt)
@@ -43,6 +43,23 @@ void PhysicsSystem::Update(float dt)
 		}
 	}
 
+#ifndef CONSTRAINT_BOARD
+	for (auto dBody : m_bodies)
+	{
+		for (auto sBody : m_staticBodies)
+		{
+			ManifoldPoint result;
+			result = CheckCollision(*dBody, *sBody);
+			if (result.colliding)
+			{
+				m_collidersA.push_back(dBody);
+				m_collidersB.push_back(sBody);
+				m_results.push_back(result);
+			}
+		}
+	}
+#endif // !CONSTRAINT_BOARD
+
 	for (auto body : m_bodies)
 		body->ApplyForces();
 
@@ -66,8 +83,11 @@ void PhysicsSystem::Update(float dt)
 	// Linear projection to avoid sinking
 	AvoidSinking();
 	
+#ifdef CONSTRAINT_BOARD
 	for (auto body : m_bodies)
 		body->SolveConstraints(m_constraints);
+#endif
+
 }
 
 void PhysicsSystem::AddRigidBody(RigidBody* body)
@@ -76,10 +96,18 @@ void PhysicsSystem::AddRigidBody(RigidBody* body)
 	m_bodies.push_back(body);
 }
 
+void PhysicsSystem::AddStaticRigidBody(RigidBody* body)
+{
+	body->SyncCollisionVolumes();
+	m_staticBodies.push_back(body);
+}
+
+#ifdef CONSTRAINT_BOARD
 void PhysicsSystem::AddConstraint(OBB& constraint)
 {
 	m_constraints.push_back(constraint);
 }
+#endif
 
 void PhysicsSystem::ClearRigidBodies()
 { 
@@ -89,15 +117,27 @@ void PhysicsSystem::ClearRigidBodies()
 	m_bodies.clear();
 }
 
+void PhysicsSystem::ClearStaticRigidBodies()
+{
+	for (auto b : m_staticBodies)
+		delete b;
+
+	m_staticBodies.clear();
+}
+
+#ifdef CONSTRAINT_BOARD
 void PhysicsSystem::ClearConstraints()
 {
 	m_constraints.clear();
 }
+#endif
 
 void PhysicsSystem::Reset()
 {
 	ClearRigidBodies();
+#ifdef CONSTRAINT_BOARD
 	ClearConstraints();
+#endif
 }
 
 void PhysicsSystem::UpdateBallSize(float ballSize)
@@ -141,7 +181,6 @@ void PhysicsSystem::AvoidSinking()
 		rb2->SyncCollisionVolumes();
 	}
 }
-
 
 
 ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody& B)

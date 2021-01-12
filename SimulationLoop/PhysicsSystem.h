@@ -11,27 +11,36 @@ public:
 	void Update(float dt);
 
 	void AddRigidBody(RigidBody* body);
-	void AddConstraint(OBB& constraint);
+	void AddStaticRigidBody(RigidBody* body);
 	
 	void ClearRigidBodies();
+	void ClearStaticRigidBodies();
+
+#ifdef CONSTRAINT_BOARD
+	void AddConstraint(OBB& constraint);
 	void ClearConstraints();
+	const std::vector<OBB>& Constraints() const { return m_constraints; }
+#endif
 
 	void Reset();
 
 	const std::vector<RigidBody*>& Bodies() const { return m_bodies; }
-	const std::vector<OBB>& Constraints() const { return m_constraints; }
+	const std::vector<RigidBody*>& StaticBodies() const { return m_staticBodies; }
 
 	void UpdateBallSize(float ballSize);
 	void UpdateRestitution(float restitution);
 	void UpdateFriction(float friction);
 
 private:
+	std::vector<RigidBody*>    m_staticBodies;
 	std::vector<RigidBody*>    m_bodies;
 	std::vector<RigidBody*>    m_collidersA;
 	std::vector<RigidBody*>    m_collidersB;
 	std::vector<ManifoldPoint> m_results;
+#ifdef CONSTRAINT_BOARD
 	std::vector<OBB>           m_constraints;
-
+#endif
+	
 	// Smaller = more accurate [0.01 to 0.1] 
 	float m_penetrationSlack{ 0.01f };
 	// Smaller = less jitter / more penetration [0.2 to 0.8]
@@ -48,6 +57,4 @@ private:
 private:	
 	void AvoidSinking();
 	
-
-
 };

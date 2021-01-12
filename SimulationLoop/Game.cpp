@@ -1,19 +1,10 @@
 #include "Game.h"
 #include "Renderer.h"
 #include "Math\Matrix3.h"
+#include "Constants.h"
+
 #include <random>
-#include<time.h>
-
-#define BALL_TOTAL 60
-#define BALL_MASS  1.f
-
-#define BLACK math::Vector3D(0.f, 0.f, 0.f)
-#define WHITE math::Vector3D(1.f, 1.f, 1.f)
-#define GRAY  math::Vector3D(0.5f, 0.5f, 0.5f)
-
-#define FRICTION_MAG_DEFAULT 0.1f
-#define RESTITUTION_MAG_DEFAULT 0.1f
-#define BALL_SIZE_DEFAULT 0.5f
+#include <time.h>
 
 float Game::frictionMag = FRICTION_MAG_DEFAULT;
 float Game::restitutionMag = RESTITUTION_MAG_DEFAULT;
@@ -30,12 +21,8 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 	
 	srand(time(0));
 
-#ifndef BOARD_2
 	Board();
-#else
-	Board2();
-#endif // !BOARD_2
-		
+
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
 }
@@ -46,8 +33,6 @@ Game::~Game(void)
 	delete m_physicsSys;
 }
 
-
-
 void Game::Update(float dt)
 {
 	// calculate dt based on the simulation loop rate using a timer
@@ -55,24 +40,13 @@ void Game::Update(float dt)
 	m_dt = static_cast<float>((end.QuadPart - start.QuadPart) / static_cast<double>(frequency.QuadPart));
 	start = end;
 
+	// variable delta time
 	if (m_dt > 0.1f) m_dt = 0.1f;
-
 	m_fps = static_cast<int>(1.0 / m_dt);
-
 	m_dt *= m_timeScale;
 
 	if(!m_paused)
 		m_physicsSys->Update(dt);
-
-	//for (auto b : m_physicsSys->Bodies()) 
-	//{
-	//	if ((b->position.y + b->sphereVolume.radius) < -40)
-	//	{
-	//		b->position.y = -44 + b->sphereVolume.radius;
-	//		b->velocity.x = 0.0f;
-	//		b->velocity.y = 0.0f;
-	//	}
-	//}
 
 	Render();
 }
@@ -95,11 +69,20 @@ void Game::Render()
 			Renderer::DrawAABBCube(b->aabbVolume);
 	}
 
+#ifdef CONSTRAINT_BOARD
 	for (auto& b : m_physicsSys->Constraints())
-	{
 		Renderer::DrawOBBCube(b);
+#else
+	for (auto b : m_physicsSys->StaticBodies())
+	{
+		if (b->type == VolumeType::Sphere)
+			Renderer::DrawSphere(b->sphereVolume);
+		else if (b->type == VolumeType::OBB)
+			Renderer::DrawOBBCube(b->obbVolume);
+		else if (b->type == VolumeType::AABB)
+			Renderer::DrawAABBCube(b->aabbVolume);
 	}
-
+#endif
 	SwapBuffers(m_hdc);
 }
 
@@ -120,8 +103,6 @@ void Game::AddPegs()
 	float PEG_Y = 0.f;
 	constexpr float PEG_Z = 0.f;
 
-#define PEG_COLOR WHITE
-
 	PEG_Y = 20;
 
 	for (int i = 0; i < 10; ++i)
@@ -132,24 +113,38 @@ void Game::AddPegs()
 		{
 			for (int j = -16; j < 17; j += 4)
 			{
+#ifdef CONSTRAINT_BOARD
 				m_physicsSys->AddConstraint(
 					OBB(math::Vector3D(j, PEG_Y, PEG_Z),
 						math::Vector3D(1.0f, 1.0f, 1.0f),
 						math::rotation3x3(0, 0, 45),
 						PEG_COLOR)
 				);
+#else
+				m_physicsSys->AddStaticRigidBody(
+					CreateStaticOBB(
+						math::Vector3D(j, PEG_Y, PEG_Z),
+						math::Vector3D(1.0f, 1.0f, 1.0f),
+						math::rotation3x3(0, 0, 45),
+						PEG_COLOR
+					));
+#endif
 			}
 		}
 		else
 		{
 			for (int j = -18; j < 19; j += 4)
 			{
+#ifdef CONSTRAINT_BOARD
 				m_physicsSys->AddConstraint(
 					OBB(math::Vector3D(j, PEG_Y, PEG_Z),
 						math::Vector3D(1.0f, 1.0f, 1.0f),
 						math::rotation3x3(0, 0, 45),
 						PEG_COLOR)
 				);
+#else
+
+#endif
 			}
 		}
 	}
@@ -161,33 +156,39 @@ void Game::AddBins()
 
 	for (int i = 0; i < 9; ++i)
 	{
+#ifdef CONSTRAINT_BOARD
 		m_physicsSys->AddConstraint(
 			OBB(math::Vector3D(BIN_X, -35.f, 0.f),
 				math::Vector3D(0.3f, 10.0f, 1.0f),
 				math::rotation3x3(0, 0, 0),
 				BLACK)
 		);
-		BIN_X += 4.0;
-	}
-}
-
-void Game::AddBins2()
-{
-	float BIN_X = -16.f;
-
-	for (int i = 0; i < 9; ++i)
-	{
-		m_physicsSys->AddRigidBody(
-			CreateAABBRigidBody(
+#else
+		m_physicsSys->AddStaticRigidBody(
+			CreateStaticAABB(
 				math::Vector3D(BIN_X, -35.f, 0.f),
 				math::Vector3D(0.3f, 10.0f, 1.0f),
 				BLACK
-			));		
+			));
+#endif
 		BIN_X += 4.0;
 	}
 }
 
-RigidBody* Game::CreateAABBRigidBody(math::Vector3D pos, math::Vector3D size, math::Vector3D color)
+
+RigidBody* Game::CreateStaticSphere(math::Vector3D pos, float radius, math::Vector3D color)
+{
+	RigidBody* body = new RigidBody();
+	body->position = pos;
+	body->mass = 0;
+	body->friction = 0;
+	body->restitution = 0;
+	body->type = VolumeType::Sphere;
+	body->sphereVolume = Sphere(pos, radius, color);
+	return body;
+}
+
+RigidBody* Game::CreateStaticAABB(math::Vector3D pos, math::Vector3D size, math::Vector3D color)
 {
 	RigidBody* body = new RigidBody();
 	body->position = pos;
@@ -196,6 +197,18 @@ RigidBody* Game::CreateAABBRigidBody(math::Vector3D pos, math::Vector3D size, ma
 	body->restitution = 0;
 	body->type = VolumeType::AABB;
 	body->aabbVolume = AABB(pos, size, color);
+	return body;
+}
+
+RigidBody* Game::CreateStaticOBB(math::Vector3D pos, math::Vector3D size, math::Matrix3 orientation, math::Vector3D color)
+{
+	RigidBody* body = new RigidBody();
+	body->position = pos;
+	body->mass = 0;
+	body->friction = 0;
+	body->restitution = 0;
+	body->type = VolumeType::OBB;
+	body->obbVolume = OBB(pos, size, orientation, color);
 	return body;
 }
 
@@ -239,11 +252,7 @@ void Game::Reset()
 	if (debugMode)
 		DebugBoard();
 	else
-#ifndef BOARD_2
 		Board();
-#else
-		Board2();
-#endif // !BOARD_2
 }
 
 void Game::Board()
@@ -258,6 +267,8 @@ void Game::Board()
 
 	AddPegs();
 	AddBins();
+	
+#ifdef CONSTRAINT_BOARD
 
 	// left funnel
 	m_physicsSys->AddConstraint(		
@@ -311,73 +322,60 @@ void Game::Board()
 			BLACK)
 	);
 
-	SpawnBalls();
-}
-
-void Game::Board2()
-{
-	m_paused = false;
-	m_timeScale = 1.f;
-	frictionMag = FRICTION_MAG_DEFAULT;
-	restitutionMag = RESTITUTION_MAG_DEFAULT;
-	ballSize = BALL_SIZE_DEFAULT;
-
-	m_physicsSys->Reset();
-
-	AddPegs();
-	AddBins2();
+#else // STATIC_BOARD
 
 	// left funnel
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(-12.0f, 28.f, 0.f),
+	m_physicsSys->AddStaticRigidBody(
+		CreateStaticOBB(
+			math::Vector3D(-12.0f, 30.f, 0.f),
 			math::Vector3D(12.0f, 1.0f, 1.0f),
 			math::rotation3x3(0.f, 0.f, -35.f),
-			BLACK)
-	);
+			BLACK
+		));
 
 
 	// right funnel
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(12.0f, 28.f, 0.f),
+	m_physicsSys->AddStaticRigidBody(
+		CreateStaticOBB(
+			math::Vector3D(12.0f, 30.f, 0.f),
 			math::Vector3D(12.0f, 1.0f, 1.0f),
 			math::rotation3x3(0.f, 0.f, 35.f),
-			BLACK)
-	);
-
+			BLACK
+		));
 
 	// left
-	m_physicsSys->AddRigidBody(
-		CreateAABBRigidBody(
+	m_physicsSys->AddStaticRigidBody(
+		CreateStaticAABB(
 			math::Vector3D(-21.0f, -5.f, 0.f),
 			math::Vector3D(1.0f, 40.0f, 1.0f),
 			BLACK
 		));
 
-
 	// right
-	m_physicsSys->AddRigidBody(
-		CreateAABBRigidBody(
+	m_physicsSys->AddStaticRigidBody(
+		CreateStaticAABB(
 			math::Vector3D(21.0f, -5.f, 0.f),
 			math::Vector3D(1.0f, 40.0f, 1.0f),
 			BLACK
 		));
 
-
 	// back
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -5.f, -2.f),
-			math::Vector3D(20.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			GRAY)
-	);
+	//m_physicsSys->AddStaticRigidBody(
+	//	CreateStaticAABB(
+	//		math::Vector3D(0.0f, -5.f, -5.f),
+	//		math::Vector3D(20.0f, 40.0f, 1.0f),
+	//		GRAY
+	//	));
 
 	// bottom
-	m_physicsSys->AddRigidBody(
-		CreateAABBRigidBody(
+	m_physicsSys->AddStaticRigidBody(
+		CreateStaticAABB(
 			math::Vector3D(0.0f, -46.f, 0.f),
 			math::Vector3D(22.0f, 2.0f, 1.0f),
 			BLACK
 		));
+
+#endif
 
 	SpawnBalls();
 }
@@ -394,17 +392,26 @@ void Game::DebugBoard()
 
 	// left
 	m_physicsSys->AddRigidBody(
-		CreateAABBRigidBody(math::Vector3D(-9.0f, -3.f, 0.f), math::Vector3D(1.0f, 10.0f, 1.0f), BLACK)
+		CreateStaticAABB(math::Vector3D(-9.0f, -3.f, 0.f), math::Vector3D(1.0f, 10.0f, 1.0f), BLACK)
 	);
 
 	// right	
 	m_physicsSys->AddRigidBody(
-		CreateAABBRigidBody(math::Vector3D(9.0f, -3.f, 0.f), math::Vector3D(1.0f, 10.0f, 1.0f), BLACK)
+		CreateStaticAABB(math::Vector3D(9.0f, -3.f, 0.f), math::Vector3D(1.0f, 10.0f, 1.0f), BLACK)
 	);
 
 	// bottom
 	m_physicsSys->AddRigidBody(
-		CreateAABBRigidBody(math::Vector3D(0.0f, -15.f, 0.f), math::Vector3D(8.0f, 2.0f, 1.0f), BLACK)
+		CreateStaticAABB(math::Vector3D(0.0f, -15.f, 0.f), math::Vector3D(8.0f, 2.0f, 1.0f), BLACK)
+	);
+
+
+	m_physicsSys->AddStaticRigidBody(
+		CreateStaticOBB(
+			math::Vector3D(0.0f, 0.f, 0.f), 
+			math::Vector3D(8.0f, 2.0f, 1.0f),
+			math::rotation3x3(0.f, 0.f, 45.f),
+			GREEN)
 	);
 
 	SpawnBall(0, 0);
@@ -474,9 +481,5 @@ void Game::ToggleDebugMode()
 	if (debugMode)
 		DebugBoard();
 	else
-#ifndef BOARD_2
 		Board();
-#else
-		Board2();
-#endif // !BOARD_2
 }

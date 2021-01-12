@@ -98,6 +98,7 @@
   <ItemGroup>
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="Geometry2D.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math\AffineTransform.cpp" />
     <ClCompile Include="Math\MathUtil.cpp" />
@@ -106,19 +107,23 @@
     <ClCompile Include="Math\Vector2D.cpp" />
     <ClCompile Include="Math\Vector3D.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
+    <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="Geometry2D.h" />
     <ClInclude Include="Math\AffineTransform.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Math\Geometry.h" />
     <ClInclude Include="Math\MathUtil.h" />
     <ClInclude Include="Math\Matrix3.h" />
     <ClInclude Include="Math\Matrix4.h" />
+    <ClInclude Include="QuadTree.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Math\Vector2D.h" />
     <ClInclude Include="Math\Vector3D.h" />

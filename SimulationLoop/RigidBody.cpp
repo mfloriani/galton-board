@@ -1,8 +1,6 @@
 #include "RigidBody.h"
 #include "Game.h"
 
-#define GRAVITY -9.81f
-
 RigidBody::RigidBody()
 {	
 }
@@ -15,11 +13,6 @@ void RigidBody::ApplyForces()
 {
 	m_forces = math::Vector3D(0.0f, GRAVITY * mass, 0.f);
 }
-
-//#define DAMPING 0.98f
-#define DAMPING 1.f
-
-
 
 void RigidBody::Update(float dt)
 {	
@@ -52,6 +45,7 @@ void RigidBody::Update(float dt)
 	//if (fabsf(velocity.z) < 0.001f) 
 	//	velocity.z = 0.0f;
 
+#ifdef ANGULAR_VELOCITY
 	//if (type == VolumeType::OBB)
 	{
 		math::Vector3D angAccel = math::multiplyVector(m_torques, InverseTensor());
@@ -68,7 +62,7 @@ void RigidBody::Update(float dt)
 
 	//if (type == VolumeType::OBB)
 		orientation += angularVel * dt;
-
+#endif
 	SyncCollisionVolumes();
 }
 
@@ -78,13 +72,16 @@ void RigidBody::SyncCollisionVolumes()
 	aabbVolume.position = position;
 	obbVolume.position = position;
 
+#ifdef ANGULAR_VELOCITY
 	obbVolume.orientation = math::rotation3x3(
 		math::toDegrees(orientation.x), 
 		math::toDegrees(orientation.y),
 		math::toDegrees(orientation.z)
 	);
+#endif
 }
 
+#ifdef ANGULAR_VELOCITY
 math::Matrix4 RigidBody::InverseTensor()
 {
 	float ix = 0.f;
@@ -132,8 +129,9 @@ void RigidBody::AddRotationalImpulse(const math::Vector3D& point, const math::Ve
 	math::Vector3D angAccel = math::multiplyVector(torque, InverseTensor());
 	angularVel += angAccel;
 }
+#endif
 
-
+#ifdef CONSTRAINT_BOARD
 void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
 {
 	int size = constraints.size();
@@ -170,6 +168,8 @@ void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
 		}
 	}
 }
+#endif
+
 
 void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c)
 {
@@ -180,18 +180,17 @@ void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P,
 	if (invMassSum == 0.0f)
 		return;
 
-	//#ifdef ENABLE_ANGULAR
+#ifdef ANGULAR_VELOCITY
 	math::Vector3D r1 = P.contacts[c] - A.position;
 	math::Vector3D r2 = P.contacts[c] - B.position;
 	math::Matrix4 i1 = A.InverseTensor();
 	math::Matrix4 i2 = B.InverseTensor();
-	//#endif
-
-	//#ifdef ENABLE_ANGULAR
+	
 	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
-	//#else
-		//math::Vector3D relativeVel = B.velocity - A.velocity;
-	//#endif
+#else
+	const math::Vector3D relativeVel = B.velocity - A.velocity;
+#endif
+
 	math::Vector3D relativeNormal = P.normal;
 	relativeNormal = relativeNormal.normalize();
 
@@ -204,26 +203,26 @@ void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P,
 	const float e = fminf(A.restitution, B.restitution);
 	float numerator = -(1.0f + e) * relativeDir;
 	float d1 = invMassSum;
-	//#ifdef ENABLE_ANGULAR
+#ifdef ANGULAR_VELOCITY
 	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
 	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
 	float denominator = d1 + relativeNormal.dot(d2 + d3);
-	//#else
-		//float denominator = d1;
-	//#endif
-
+#else
+	float denominator = d1;
+#endif
+	
 	float j = denominator == 0.f ? 0.f : numerator / denominator;
 	if (P.contacts.size() > 0 && j != 0.0f)
-		j /= (float)P.contacts.size();
+		j /= static_cast<float>(P.contacts.size());
 
 	math::Vector3D impulse = relativeNormal * j;
 	A.velocity = A.velocity - impulse * invMassA;
 	B.velocity = B.velocity + impulse * invMassB;
 
-	//#ifdef ENABLE_ANGULAR
+#ifdef ANGULAR_VELOCITY
 	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
 	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
-	//#endif
+#endif
 
 #if 1
 
@@ -239,20 +238,20 @@ void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P,
 
 	numerator = -relativeVel.dot(t);
 	d1 = invMassSum;
-	//#ifdef ENABLE_ANGULAR
+#ifdef ANGULAR_VELOCITY
 	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
 	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
 	denominator = d1 + t.dot(d2 + d3);
-	//#else
-		//denominator = d1;
-	//#endif
+#else
+	denominator = d1;
+#endif
 	if (denominator == 0.f)
 		return;
 
 	float jt = numerator / denominator;
 
 	if (P.contacts.size() > 0 && jt != 0.0f)
-		jt /= (float)P.contacts.size();
+		jt /= static_cast<float>(P.contacts.size());
 
 	if (CMP(jt, 0.0f))
 		return;
@@ -263,13 +262,14 @@ void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P,
 	else if (jt < -j * friction)
 		jt = -j * friction;
 
-	math::Vector3D tangentImpulse = t * jt;
+	const math::Vector3D tangentImpulse = t * jt;
 	A.velocity = A.velocity - tangentImpulse * invMassA;
 	B.velocity = B.velocity + tangentImpulse * invMassB;
-	//#ifdef ENABLE_ANGULAR
+#ifdef ANGULAR_VELOCITY
 	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
 	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
-	//#endif
 #endif
+
+#endif // enable friction? #if 1
 
 }
