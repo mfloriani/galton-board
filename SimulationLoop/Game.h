@@ -14,6 +14,8 @@
 #define BALL_SIZE_RATE 0.1f
 #define RESTORATION_RATE 0.1f
 
+#define BOARD_2
+
 class Game
 {
 public:
@@ -33,6 +35,7 @@ public:
 	
 	void Reset();
 	void Board();
+	
 	void DebugBoard();
 	void SpawnBall();
 	void SpawnBall(int x, int y);
@@ -68,7 +71,10 @@ private:
 	void AddPegs();
 	void AddBins();
 	
-
+	void Board2();
+	void AddBins2();
+	
+	RigidBody* CreateAABBRigidBody(math::Vector3D pos, math::Vector3D size, math::Vector3D color);
 
 };
 

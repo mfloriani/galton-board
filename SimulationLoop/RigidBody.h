@@ -4,8 +4,8 @@
 #include "Math\Matrix4.h"
 
 #define EULER_INTEGRATION
-//#define ACCURATE_EULER_INTEGRATION
-//#define RK4_INTEGRATION
+#define ACCURATE_EULER_INTEGRATION
+//#define VERLET_INTEGRATION
 
 enum class VolumeType
 {
@@ -30,10 +30,13 @@ public:
 	void AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse);
 
 	void SolveConstraints(const std::vector<OBB>& constraints);
+	static void ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);
 
 public:
 	VolumeType     type{ VolumeType::None };
+#ifdef EULER_INTEGRATION
 	math::Vector3D velocity;
+#endif
 	math::Vector3D position;
 	math::Vector3D oldPosition;
 	

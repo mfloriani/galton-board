@@ -4,7 +4,7 @@
 #include <random>
 #include<time.h>
 
-#define BALL_TOTAL 1
+#define BALL_TOTAL 60
 #define BALL_MASS  1.f
 
 #define BLACK math::Vector3D(0.f, 0.f, 0.f)
@@ -30,8 +30,12 @@ Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 	
 	srand(time(0));
 
+#ifndef BOARD_2
 	Board();
-	
+#else
+	Board2();
+#endif // !BOARD_2
+		
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&start);
 }
@@ -103,7 +107,6 @@ RigidBody* Game::CreateBall(math::Vector3D pos)
 {
 	RigidBody* body = new RigidBody();
 	body->position = pos;
-	//body->velocity = vel;
 	body->mass = BALL_MASS;
 	body->friction = frictionMag;
 	body->restitution = restitutionMag;
@@ -168,6 +171,35 @@ void Game::AddBins()
 	}
 }
 
+void Game::AddBins2()
+{
+	float BIN_X = -16.f;
+
+	for (int i = 0; i < 9; ++i)
+	{
+		m_physicsSys->AddRigidBody(
+			CreateAABBRigidBody(
+				math::Vector3D(BIN_X, -35.f, 0.f),
+				math::Vector3D(0.3f, 10.0f, 1.0f),
+				BLACK
+			));		
+		BIN_X += 4.0;
+	}
+}
+
+RigidBody* Game::CreateAABBRigidBody(math::Vector3D pos, math::Vector3D size, math::Vector3D color)
+{
+	RigidBody* body = new RigidBody();
+	body->position = pos;
+	body->mass = 0;
+	body->friction = 0;
+	body->restitution = 0;
+	body->type = VolumeType::AABB;
+	body->aabbVolume = AABB(pos, size, color);
+	return body;
+}
+
+
 void Game::SpawnBall()
 {
 	int x = rand() % 10;
@@ -207,7 +239,11 @@ void Game::Reset()
 	if (debugMode)
 		DebugBoard();
 	else
+#ifndef BOARD_2
 		Board();
+#else
+		Board2();
+#endif // !BOARD_2
 }
 
 void Game::Board()
@@ -220,7 +256,6 @@ void Game::Board()
 
 	m_physicsSys->Reset();
 
-	SpawnBalls();
 	AddPegs();
 	AddBins();
 
@@ -276,6 +311,75 @@ void Game::Board()
 			BLACK)
 	);
 
+	SpawnBalls();
+}
+
+void Game::Board2()
+{
+	m_paused = false;
+	m_timeScale = 1.f;
+	frictionMag = FRICTION_MAG_DEFAULT;
+	restitutionMag = RESTITUTION_MAG_DEFAULT;
+	ballSize = BALL_SIZE_DEFAULT;
+
+	m_physicsSys->Reset();
+
+	AddPegs();
+	AddBins2();
+
+	// left funnel
+	m_physicsSys->AddConstraint(
+		OBB(math::Vector3D(-12.0f, 28.f, 0.f),
+			math::Vector3D(12.0f, 1.0f, 1.0f),
+			math::rotation3x3(0.f, 0.f, -35.f),
+			BLACK)
+	);
+
+
+	// right funnel
+	m_physicsSys->AddConstraint(
+		OBB(math::Vector3D(12.0f, 28.f, 0.f),
+			math::Vector3D(12.0f, 1.0f, 1.0f),
+			math::rotation3x3(0.f, 0.f, 35.f),
+			BLACK)
+	);
+
+
+	// left
+	m_physicsSys->AddRigidBody(
+		CreateAABBRigidBody(
+			math::Vector3D(-21.0f, -5.f, 0.f),
+			math::Vector3D(1.0f, 40.0f, 1.0f),
+			BLACK
+		));
+
+
+	// right
+	m_physicsSys->AddRigidBody(
+		CreateAABBRigidBody(
+			math::Vector3D(21.0f, -5.f, 0.f),
+			math::Vector3D(1.0f, 40.0f, 1.0f),
+			BLACK
+		));
+
+
+	// back
+	m_physicsSys->AddConstraint(
+		OBB(math::Vector3D(0.0f, -5.f, -2.f),
+			math::Vector3D(20.0f, 40.0f, 1.0f),
+			math::rotation3x3(0.f, 0.f, 0.f),
+			GRAY)
+	);
+
+	// bottom
+	m_physicsSys->AddRigidBody(
+		CreateAABBRigidBody(
+			math::Vector3D(0.0f, -46.f, 0.f),
+			math::Vector3D(22.0f, 2.0f, 1.0f),
+			BLACK
+		));
+
+	SpawnBalls();
 }
 
 void Game::DebugBoard()
@@ -288,69 +392,22 @@ void Game::DebugBoard()
 
 	m_physicsSys->Reset();
 
-	SpawnBall(0,0);
-
 	// left
-	{
-		RigidBody* body = new RigidBody();
-		body->position = math::Vector3D(-9.0f, -3.f, 0.f);
-		//body->velocity = vel;
-		body->mass = 0;
-		body->friction = 0;
-		body->restitution = 0;
-		body->type = VolumeType::AABB;
-		body->aabbVolume = AABB(body->position, math::Vector3D(1.0f, 10.0f, 1.0f), BLACK);
-		m_physicsSys->AddRigidBody(body);
+	m_physicsSys->AddRigidBody(
+		CreateAABBRigidBody(math::Vector3D(-9.0f, -3.f, 0.f), math::Vector3D(1.0f, 10.0f, 1.0f), BLACK)
+	);
 
-	}
-
-	// right
-	{
-		RigidBody* body = new RigidBody();
-		body->position = math::Vector3D(9.0f, -3.f, 0.f);
-		//body->velocity = vel;
-		body->mass = 0;
-		body->friction = 0;
-		body->restitution = 0;
-		body->type = VolumeType::AABB;
-		body->aabbVolume = AABB(body->position, math::Vector3D(1.0f, 10.0f, 1.0f), BLACK);
-		m_physicsSys->AddRigidBody(body);
-	}
-
+	// right	
+	m_physicsSys->AddRigidBody(
+		CreateAABBRigidBody(math::Vector3D(9.0f, -3.f, 0.f), math::Vector3D(1.0f, 10.0f, 1.0f), BLACK)
+	);
 
 	// bottom
-	{
+	m_physicsSys->AddRigidBody(
+		CreateAABBRigidBody(math::Vector3D(0.0f, -15.f, 0.f), math::Vector3D(8.0f, 2.0f, 1.0f), BLACK)
+	);
 
-	RigidBody* body = new RigidBody();
-	body->position = math::Vector3D(0.0f, -10.f, 0.f);
-	//body->velocity = vel;
-	body->mass = 0;
-	body->friction = 0;
-	body->restitution = 0;
-	body->type = VolumeType::AABB;
-	body->aabbVolume = AABB(body->position, math::Vector3D(8.0f, 2.0f, 1.0f), BLACK);
-
-	m_physicsSys->AddRigidBody(body);
-
-	}
-
-
-
-	
-	//m_physicsSys->AddConstraint(
-	//	OBB(math::Vector3D(0.0f, -10.f, 0.f),
-	//		math::Vector3D(8.0f, 2.0f, 1.0f),
-	//		math::rotation3x3(0.f, 0.f, 45.f),
-	//		BLACK)
-	//);
-
-	//m_physicsSys->AddConstraint(
-	//	OBB(math::Vector3D(0.0f, -15.f, 0.f),
-	//		math::Vector3D(8.0f, 2.0f, 1.0f),
-	//		math::rotation3x3(0.f, 0.f, -45.f),
-	//		BLACK)
-	//);
-
+	SpawnBall(0, 0);
 }
 
 void Game::PauseResume()
@@ -417,5 +474,9 @@ void Game::ToggleDebugMode()
 	if (debugMode)
 		DebugBoard();
 	else
+#ifndef BOARD_2
 		Board();
+#else
+		Board2();
+#endif // !BOARD_2
 }

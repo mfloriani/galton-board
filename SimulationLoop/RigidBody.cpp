@@ -20,60 +20,6 @@ void RigidBody::ApplyForces()
 #define DAMPING 1.f
 
 
-struct State
-{
-	float x;      // position
-	float v;      // velocity
-};
-
-struct Derivative
-{
-	float dx;      // dx/dt = velocity
-	float dv;      // dv/dt = acceleration
-};
-
-float acceleration(const State& state, double t)
-{
-	const float k = 15.0f;
-	const float b = 0.1f;
-	return -k * state.x - b * state.v;
-}
-
-Derivative evaluate(const State& initial,
-	double t,
-	float dt,
-	const Derivative& d)
-{
-	State state;
-	state.x = initial.x + d.dx * dt;
-	state.v = initial.v + d.dv * dt;
-
-	Derivative output;
-	output.dx = state.v;
-	output.dv = acceleration(state, t + dt);
-	return output;
-}
-
-void integrate(State& state,
-	double t,
-	float dt)
-{
-	Derivative a, b, c, d;
-
-	a = evaluate(state, t, 0.0f, Derivative());
-	b = evaluate(state, t, dt * 0.5f, a);
-	c = evaluate(state, t, dt * 0.5f, b);
-	d = evaluate(state, t, dt, c);
-
-	float dxdt = 1.0f / 6.0f *
-		(a.dx + 2.0f * (b.dx + c.dx) + d.dx);
-
-	float dvdt = 1.0f / 6.0f *
-		(a.dv + 2.0f * (b.dv + c.dv) + d.dv);
-
-	state.x = state.x + dxdt * dt;
-	state.v = state.v + dvdt * dt;
-	}
 
 void RigidBody::Update(float dt)
 {	
@@ -92,12 +38,10 @@ void RigidBody::Update(float dt)
 
 #else 
 
-	integrate();
-
-	//math::Vector3D vel = position - oldPosition;
-	//oldPosition = position;
-	//const float dtSq = dt * dt;
-	//position = position + (vel * DAMPING + m_forces * dtSq);
+	math::Vector3D velocity = position - oldPosition;
+	oldPosition = position;
+	float deltaSquare = dt * dt;
+	position = position + (velocity * friction + m_forces * deltaSquare);
 
 #endif
 
@@ -219,7 +163,7 @@ void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
 				oldPosition = position;
 				velocity = vt - vn * restitution;
 #else
-				oldPosition = position - (vt - vn * bounce);
+				oldPosition = position - (vt - vn * restitution);
 #endif
 				break;
 			}
@@ -227,3 +171,105 @@ void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
 	}
 }
 
+void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c)
+{
+	const float invMassA = A.InverseMass();
+	const float invMassB = B.InverseMass();
+	const float invMassSum = invMassA + invMassB;
+
+	if (invMassSum == 0.0f)
+		return;
+
+	//#ifdef ENABLE_ANGULAR
+	math::Vector3D r1 = P.contacts[c] - A.position;
+	math::Vector3D r2 = P.contacts[c] - B.position;
+	math::Matrix4 i1 = A.InverseTensor();
+	math::Matrix4 i2 = B.InverseTensor();
+	//#endif
+
+	//#ifdef ENABLE_ANGULAR
+	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
+	//#else
+		//math::Vector3D relativeVel = B.velocity - A.velocity;
+	//#endif
+	math::Vector3D relativeNormal = P.normal;
+	relativeNormal = relativeNormal.normalize();
+
+	const float relativeDir = relativeVel.dot(relativeNormal);
+
+	// Moving away from each other?
+	if (relativeDir > 0.0f)
+		return;
+
+	const float e = fminf(A.restitution, B.restitution);
+	float numerator = -(1.0f + e) * relativeDir;
+	float d1 = invMassSum;
+	//#ifdef ENABLE_ANGULAR
+	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
+	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
+	float denominator = d1 + relativeNormal.dot(d2 + d3);
+	//#else
+		//float denominator = d1;
+	//#endif
+
+	float j = denominator == 0.f ? 0.f : numerator / denominator;
+	if (P.contacts.size() > 0 && j != 0.0f)
+		j /= (float)P.contacts.size();
+
+	math::Vector3D impulse = relativeNormal * j;
+	A.velocity = A.velocity - impulse * invMassA;
+	B.velocity = B.velocity + impulse * invMassB;
+
+	//#ifdef ENABLE_ANGULAR
+	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
+	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
+	//#endif
+
+#if 1
+
+	//
+	// Friction
+	//
+
+	math::Vector3D t = relativeVel - (relativeNormal * relativeDir);
+	if (CMP(t.sizeSqr(), 0.0f))
+		return;
+
+	t = t.normalize();
+
+	numerator = -relativeVel.dot(t);
+	d1 = invMassSum;
+	//#ifdef ENABLE_ANGULAR
+	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
+	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
+	denominator = d1 + t.dot(d2 + d3);
+	//#else
+		//denominator = d1;
+	//#endif
+	if (denominator == 0.f)
+		return;
+
+	float jt = numerator / denominator;
+
+	if (P.contacts.size() > 0 && jt != 0.0f)
+		jt /= (float)P.contacts.size();
+
+	if (CMP(jt, 0.0f))
+		return;
+
+	const float friction = sqrtf(A.friction * B.friction);
+	if (jt > j * friction)
+		jt = j * friction;
+	else if (jt < -j * friction)
+		jt = -j * friction;
+
+	math::Vector3D tangentImpulse = t * jt;
+	A.velocity = A.velocity - tangentImpulse * invMassA;
+	B.velocity = B.velocity + tangentImpulse * invMassB;
+	//#ifdef ENABLE_ANGULAR
+	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
+	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
+	//#endif
+#endif
+
+}
