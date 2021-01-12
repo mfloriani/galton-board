@@ -45,8 +45,7 @@ private:
 	static ManifoldPoint CheckCollision(const OBB& A, const Sphere& B);
 	static ManifoldPoint CheckCollision(const OBB& A, const OBB& B);
 
-private:
-	void ApplyLinearImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);
+private:	
 	void AvoidSinking();
 	
 

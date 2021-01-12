@@ -5,6 +5,7 @@
 
 #define EULER_INTEGRATION
 #define ACCURATE_EULER_INTEGRATION
+//#define VERLET_INTEGRATION
 
 enum class VolumeType
 {
@@ -25,18 +26,23 @@ public:
 	void ApplyForces();
 	void SyncCollisionVolumes();
 
-	//math::Matrix4 InverseTensor();
-	//void AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse);
+	math::Matrix4 InverseTensor();
+	void AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse);
 
 	void SolveConstraints(const std::vector<OBB>& constraints);
+	static void ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);
 
 public:
 	VolumeType     type{ VolumeType::None };
+#ifdef EULER_INTEGRATION
 	math::Vector3D velocity;
+#endif
 	math::Vector3D position;
 	math::Vector3D oldPosition;
+	
 	math::Vector3D orientation;
-	//math::Vector3D angularVel;
+	math::Vector3D angularVel;
+
 	float          mass{ 1.0f };
 	float          friction{ 0.0f };
 	float          restitution{ 0.0f };
@@ -46,6 +52,6 @@ public:
 
 private:
 	math::Vector3D m_forces;
-	//math::Vector3D m_torques;
+	math::Vector3D m_torques;
 
 };
