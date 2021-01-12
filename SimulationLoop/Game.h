@@ -26,7 +26,7 @@ public:
 	static float ballSize;
 	static bool  debugMode;
 
-	void Update();
+	void Update(float dt);
 	void Render();
 
 	static RigidBody* CreateBall(math::Vector3D pos);

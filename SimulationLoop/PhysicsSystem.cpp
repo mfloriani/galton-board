@@ -55,7 +55,7 @@ void PhysicsSystem::Update(float dt)
 			{
 				RigidBody* rb1 = m_collidersA[i];
 				RigidBody* rb2 = m_collidersB[i];
-				ApplyLinearImpulse(*rb1, *rb2, m_results[i], j);
+				ApplyImpulse(*rb1, *rb2, m_results[i], j);
 			}
 		}
 	}
@@ -142,7 +142,7 @@ void PhysicsSystem::AvoidSinking()
 	}
 }
 
-void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c)
+void PhysicsSystem::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c)
 {
 	const float invMassA = A.InverseMass();
 	const float invMassB = B.InverseMass();
@@ -152,16 +152,16 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 		return;
 
 //#ifdef ENABLE_ANGULAR
-//	math::Vector3D r1 = P.contacts[c] - A.position;
-//	math::Vector3D r2 = P.contacts[c] - B.position;
-//	math::Matrix4 i1 = A.InverseTensor();
-//	math::Matrix4 i2 = B.InverseTensor();
+	math::Vector3D r1 = P.contacts[c] - A.position;
+	math::Vector3D r2 = P.contacts[c] - B.position;
+	math::Matrix4 i1 = A.InverseTensor();
+	math::Matrix4 i2 = B.InverseTensor();
 //#endif
 
 //#ifdef ENABLE_ANGULAR
-//	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
+	math::Vector3D relativeVel = (B.velocity + math::cross(B.angularVel, r2)) - (A.velocity + math::cross(A.angularVel, r1));
 //#else
-	math::Vector3D relativeVel = B.velocity - A.velocity;
+	//math::Vector3D relativeVel = B.velocity - A.velocity;
 //#endif
 	math::Vector3D relativeNormal = P.normal;
 	relativeNormal = relativeNormal.normalize();
@@ -176,11 +176,11 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	float numerator = -(1.0f + e) * relativeDir;
 	float d1 = invMassSum;
 //#ifdef ENABLE_ANGULAR
-//	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
-//	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
-//	float denominator = d1 + relativeNormal.dot(d2 + d3);
+	math::Vector3D d2 = math::cross(math::multiplyVector(math::cross(r1, relativeNormal), i1), r1);
+	math::Vector3D d3 = math::cross(math::multiplyVector(math::cross(r2, relativeNormal), i2), r2);
+	float denominator = d1 + relativeNormal.dot(d2 + d3);
 //#else
-	float denominator = d1;
+	//float denominator = d1;
 //#endif
 
 	float j = denominator == 0.f ? 0.f : numerator / denominator;
@@ -192,11 +192,11 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	B.velocity = B.velocity + impulse * invMassB;
 
 //#ifdef ENABLE_ANGULAR
-//	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
-//	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
+	A.angularVel -= math::multiplyVector(math::cross(r1, impulse), i1);
+	B.angularVel += math::multiplyVector(math::cross(r2, impulse), i2);
 //#endif
 	
-#if 0
+#if 1
 
 	//
 	// Friction
@@ -211,11 +211,11 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	numerator = -relativeVel.dot(t);
 	d1 = invMassSum;
 //#ifdef ENABLE_ANGULAR
-//	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
-//	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
-//	denominator = d1 + t.dot(d2 + d3);
+	d2 = math::cross(math::multiplyVector(math::cross(r1, t), i1), r1);
+	d3 = math::cross(math::multiplyVector(math::cross(r2, t), i2), r2);
+	denominator = d1 + t.dot(d2 + d3);
 //#else
-	denominator = d1;
+	//denominator = d1;
 //#endif
 	if (denominator == 0.f)
 		return;
@@ -238,8 +238,8 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 	A.velocity = A.velocity - tangentImpulse * invMassA;
 	B.velocity = B.velocity + tangentImpulse * invMassB;
 //#ifdef ENABLE_ANGULAR
-//	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
-//	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
+	A.angularVel -= math::multiplyVector(math::cross(r1, tangentImpulse), i1);
+	B.angularVel -= math::multiplyVector(math::cross(r2, tangentImpulse), i2);
 //#endif
 #endif
 
@@ -248,44 +248,38 @@ void PhysicsSystem::ApplyLinearImpulse(RigidBody& A, RigidBody& B, const Manifol
 ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody& B)
 {
 	ManifoldPoint result;
-	// check here only sphere x sphere collisions
-	result = CheckCollision(A.sphereVolume, B.sphereVolume);
-
-	//if (A.type == VolumeType::Sphere)
-	//{
-	//	if (B.type == VolumeType::Sphere)
-	//	{
-	//		result = CheckCollision(A.sphereVolume, B.sphereVolume);
-	//	}
-		//else if (B.type == VolumeType::AABB)
-		//{
-		//	result = CheckCollision(B.aabbVolume, A.sphereVolume);
-		//}
-		//else if (B.type == VolumeType::OBB)
-		//{
-		//	result = CheckCollision(B.obbVolume, A.sphereVolume);
-		//	result.normal = result.normal * -1.0f;
-		//}
-	//}
-	//else if (A.type == VolumeType::OBB)
-	//{
-	//	//if (B.type == VolumeType::OBB)
-	//	//{
-	//	//	result = CheckCollision(A.obbVolume, B.obbVolume);
-	//	//}
-	//	//else 
-	//	if (B.type == VolumeType::Sphere)
-	//	{
-	//		result = CheckCollision(A.obbVolume, B.sphereVolume);
-	//	}
-	//}
-	//else if (A.type == VolumeType::AABB)
-	//{
-	//	if (B.type == VolumeType::Sphere)
-	//	{
-	//		result = CheckCollision(A.obbVolume, B.sphereVolume);
-	//	}
-	//}
+	
+	if (A.type == VolumeType::Sphere)
+	{
+		if (B.type == VolumeType::Sphere)
+		{
+			result = CheckCollision(A.sphereVolume, B.sphereVolume);
+		}
+		else if (B.type == VolumeType::AABB)
+		{
+			result = CheckCollision(B.aabbVolume, A.sphereVolume);
+		}
+		else if (B.type == VolumeType::OBB)
+		{
+			result = CheckCollision(B.obbVolume, A.sphereVolume);
+			result.normal = result.normal * -1.0f;
+		}
+	}
+	else if (A.type == VolumeType::AABB)
+	{
+		if (B.type == VolumeType::Sphere)
+		{
+			result = CheckCollision(A.aabbVolume, B.sphereVolume);
+			result.normal = result.normal * -1.0f;
+		}
+	}
+	else if (A.type == VolumeType::OBB)
+	{	
+		if (B.type == VolumeType::Sphere)
+		{
+			result = CheckCollision(A.obbVolume, B.sphereVolume);
+		}
+	}
 
 	return result;
 }

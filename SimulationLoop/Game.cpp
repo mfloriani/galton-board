@@ -11,7 +11,7 @@
 #define WHITE math::Vector3D(1.f, 1.f, 1.f)
 #define GRAY  math::Vector3D(0.5f, 0.5f, 0.5f)
 
-#define FRICTION_MAG_DEFAULT 0.f
+#define FRICTION_MAG_DEFAULT 0.1f
 #define RESTITUTION_MAG_DEFAULT 0.1f
 #define BALL_SIZE_DEFAULT 0.5f
 
@@ -44,7 +44,7 @@ Game::~Game(void)
 
 
 
-void Game::Update()
+void Game::Update(float dt)
 {
 	// calculate dt based on the simulation loop rate using a timer
 	QueryPerformanceCounter(&end);
@@ -58,12 +58,16 @@ void Game::Update()
 	m_dt *= m_timeScale;
 
 	if(!m_paused)
-		m_physicsSys->Update(m_dt);
+		m_physicsSys->Update(dt);
 
 	//for (auto b : m_physicsSys->Bodies()) 
 	//{
-	//	if (b->position.y < -45) 
-	//		b->position.y = -45;
+	//	if ((b->position.y + b->sphereVolume.radius) < -40)
+	//	{
+	//		b->position.y = -44 + b->sphereVolume.radius;
+	//		b->velocity.x = 0.0f;
+	//		b->velocity.y = 0.0f;
+	//	}
 	//}
 
 	Render();
@@ -218,7 +222,7 @@ void Game::Board()
 
 	SpawnBalls();
 	AddPegs();
-	//AddBins();
+	AddBins();
 
 	// left funnel
 	m_physicsSys->AddConstraint(		
@@ -287,20 +291,65 @@ void Game::DebugBoard()
 	SpawnBall(0,0);
 
 	// left
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(-9.0f, -3.f, 0.f),
-			math::Vector3D(1.0f, 6.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			GRAY)
-	);
+	{
+		RigidBody* body = new RigidBody();
+		body->position = math::Vector3D(-9.0f, -3.f, 0.f);
+		//body->velocity = vel;
+		body->mass = 0;
+		body->friction = 0;
+		body->restitution = 0;
+		body->type = VolumeType::AABB;
+		body->aabbVolume = AABB(body->position, math::Vector3D(1.0f, 10.0f, 1.0f), BLACK);
+		m_physicsSys->AddRigidBody(body);
+
+	}
+
+	// right
+	{
+		RigidBody* body = new RigidBody();
+		body->position = math::Vector3D(9.0f, -3.f, 0.f);
+		//body->velocity = vel;
+		body->mass = 0;
+		body->friction = 0;
+		body->restitution = 0;
+		body->type = VolumeType::AABB;
+		body->aabbVolume = AABB(body->position, math::Vector3D(1.0f, 10.0f, 1.0f), BLACK);
+		m_physicsSys->AddRigidBody(body);
+	}
+
 
 	// bottom
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -10.f, 0.f),
-			math::Vector3D(8.0f, 2.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
+	{
+
+	RigidBody* body = new RigidBody();
+	body->position = math::Vector3D(0.0f, -10.f, 0.f);
+	//body->velocity = vel;
+	body->mass = 0;
+	body->friction = 0;
+	body->restitution = 0;
+	body->type = VolumeType::AABB;
+	body->aabbVolume = AABB(body->position, math::Vector3D(8.0f, 2.0f, 1.0f), BLACK);
+
+	m_physicsSys->AddRigidBody(body);
+
+	}
+
+
+
+	
+	//m_physicsSys->AddConstraint(
+	//	OBB(math::Vector3D(0.0f, -10.f, 0.f),
+	//		math::Vector3D(8.0f, 2.0f, 1.0f),
+	//		math::rotation3x3(0.f, 0.f, 45.f),
+	//		BLACK)
+	//);
+
+	//m_physicsSys->AddConstraint(
+	//	OBB(math::Vector3D(0.0f, -15.f, 0.f),
+	//		math::Vector3D(8.0f, 2.0f, 1.0f),
+	//		math::rotation3x3(0.f, 0.f, -45.f),
+	//		BLACK)
+	//);
 
 }
 

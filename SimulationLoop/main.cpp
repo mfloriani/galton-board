@@ -313,6 +313,8 @@ int WINAPI WinMain( HINSTANCE hinstance,
 
 	game = new Game(hDC);
 
+	float dt = 1.0 / 60.0;
+
 	// enter main event loop
 	bool quit = false;
 	while(!quit)
@@ -328,7 +330,7 @@ int WINAPI WinMain( HINSTANCE hinstance,
 			DispatchMessage(&msg);
 		} // end if
 		else {
-			game->Update();
+			game->Update(dt);
 		}
 
 	} // end while
