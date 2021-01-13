@@ -3,9 +3,12 @@
 
 GLuint Renderer::m_sphereTex;
 
-void Renderer::Init()
+bool Renderer::Init()
 {
 	m_sphereTex = TextureLoader::LoadBMP("checker.bmp");
+
+
+    return true;
 }
 
 void Renderer::DrawRect(const Rectangle2D& r, math::Vector3D c)

@@ -235,6 +235,11 @@ void InitializeOpenGL(HWND hwnd, int width, int height)
 
 
 
+int main(HINSTANCE hInstance, HINSTANCE hPrevInstance,LPSTR lpCmdLine, int nCmdShow)
+{
+	return WinMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+}
+
 
 //************************ WIN MAIN***********************
 
@@ -283,29 +288,31 @@ int WINAPI WinMain( HINSTANCE hinstance,
 	InitializeOpenGL(hwnd, WND_WIDTH, WND_HEIGHT);
 
 	game = new Game(hDC);
-
-	// fixed timestep
-	const float dt = 1.f / 60.f;
-
-	// enter main event loop
-	bool quit = false;
-	while(!quit)
+	if (game->Init())
 	{
-		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
-		{ 
-			// test if this is a quit
-			if (msg.message == WM_QUIT) quit = true;
+		// fixed timestep
+		const float dt = 1.f / 60.f;
 
-			// translate any accelerator keys
-			TranslateMessage(&msg);
-			// send the message to the window proc
-			DispatchMessage(&msg);
-		} // end if
-		else {
-			game->Update(dt);
-		}
+		// enter main event loop
+		bool quit = false;
+		while(!quit)
+		{
+			if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
+			{ 
+				// test if this is a quit
+				if (msg.message == WM_QUIT) quit = true;
 
-	} // end while
+				// translate any accelerator keys
+				TranslateMessage(&msg);
+				// send the message to the window proc
+				DispatchMessage(&msg);
+			} // end if
+			else {
+				game->Update(dt);
+			}
+
+		} // end while
+	}
 
 	delete game;
 
