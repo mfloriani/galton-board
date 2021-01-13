@@ -3,7 +3,7 @@
 #define WND_WIDTH  800
 #define WND_HEIGHT 800
 
-// consider angular velocity when defined
+// not working :(
 //#define ANGULAR_VELOCITY
 
 // colors
@@ -28,7 +28,6 @@
 // Define integration
 #define EULER_INTEGRATION
 #define ACCURATE_EULER_INTEGRATION
-//#define VERLET_INTEGRATION
 
 // Changed using keys
 #define FRICTION_MAG_DEFAULT 0.1f
@@ -49,7 +48,7 @@
 #define CUBE_MASS 1.f
 #define CUBE_SIZE math::Vector3D(0.5f, 0.5f, 0.5f)
 
-//comment PEG_SHAPE_SPHERE to pegs as OBB
+//un comment PEG_SHAPE_SPHERE to have pegs as spheres
 //#define PEG_SHAPE_SPHERE
 #define PEG_COLOR WHITE
 #define PEG_SPHERE_SIZE 1.f
