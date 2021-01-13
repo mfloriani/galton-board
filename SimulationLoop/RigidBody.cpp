@@ -2,7 +2,9 @@
 #include "Game.h"
 
 RigidBody::RigidBody()
-{	
+{
+	static unsigned int nextId = 0;
+	id = ++nextId;
 }
 
 RigidBody::~RigidBody()
@@ -71,6 +73,10 @@ void RigidBody::SyncCollisionVolumes()
 	sphereVolume.position = position;
 	aabbVolume.position = position;
 	obbVolume.position = position;
+
+	// keep quad tree data up to date
+	if(quadTreeData)
+		quadTreeData->bounds.origin = math::Vector2D(position.x, position.y);
 
 #ifdef ANGULAR_VELOCITY
 	obbVolume.orientation = math::rotation3x3(

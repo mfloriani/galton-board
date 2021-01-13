@@ -21,8 +21,6 @@ int QuadTreeNode::NumObjects()
 		{
 			for (int i = 0, size = processing->children.size(); i < size; ++i)
 				process.push(&processing->children[i]);
-
-
 		}
 		else
 		{

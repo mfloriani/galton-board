@@ -3,6 +3,7 @@
 #include "Geometry.h"
 #include "Math\Matrix4.h"
 #include "Constants.h"
+#include "QuadTree.h"
 
 enum class VolumeType
 {
@@ -54,10 +55,15 @@ public:
 	AABB           aabbVolume;
 	OBB            obbVolume;
 
+	unsigned int   id;
+	//size_t         quadTreeDataIndex;
+	QuadTreeData* quadTreeData{ nullptr };
+
 private:
 	math::Vector3D m_forces;
 #ifdef ANGULAR_VELOCITY
 	math::Vector3D m_torques;
 #endif
+
 
 };

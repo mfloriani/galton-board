@@ -2,6 +2,8 @@
 #include "Geometry.h"
 #include "Constants.h"
 
+#include <cassert>
+
 PhysicsSystem::PhysicsSystem()
 {
 	m_bodies.reserve(500);
@@ -9,6 +11,10 @@ PhysicsSystem::PhysicsSystem()
 	m_collidersB.reserve(500);
 	m_results.reserve(500);
 	m_staticBodies.reserve(500);
+
+	m_quadTree = std::make_unique<QuadTree>(
+		Rectangle2D(math::Vector2D(0,0), math::Vector2D(WND_WIDTH, WND_HEIGHT))
+	);
 }
 
 PhysicsSystem::~PhysicsSystem()
@@ -93,12 +99,30 @@ void PhysicsSystem::Update(float dt)
 void PhysicsSystem::AddRigidBody(RigidBody* body)
 {
 	body->SyncCollisionVolumes();
+
+	//InsertQuadTree(body); // insert the body into quad tree and bound it to the body
+
+	//auto quatTreeData = InsertQuadTree(body);
+	//body->quadTreeDataIndex = quatTreeData;
+
+	// map the rigidbody id with quad tree data
+	//m_rBodyQTD.insert(std::make_pair(body->id, quatTreeData));
+	
 	m_bodies.push_back(body);
 }
 
 void PhysicsSystem::AddStaticRigidBody(RigidBody* body)
 {
 	body->SyncCollisionVolumes();
+
+	//InsertQuadTree(body); // insert the body into quad tree and bound it to the body
+
+	//auto quatTreeData = InsertQuadTree(body);
+	//body->quadTreeDataIndex = quatTreeData;
+
+	// map the rigidbody id with quad tree data
+	//m_rBodyQTD.insert(std::make_pair(body->id, quatTreeData));
+
 	m_staticBodies.push_back(body);
 }
 
@@ -192,6 +216,49 @@ void PhysicsSystem::AvoidSinking()
 		rb1->SyncCollisionVolumes();
 		rb2->SyncCollisionVolumes();
 	}
+}
+
+size_t PhysicsSystem::InsertQuadTree(RigidBody* body)
+{
+	//get a index inside the vector to assign to the rigid body
+	m_quadTreeData.push_back(QuadTreeData());
+	auto qtdIndex = m_quadTreeData.size()-1;
+	QuadTreeData* quadTreeData = &m_quadTreeData[qtdIndex];
+	
+	// bound qtd and body
+	quadTreeData->object = body;
+	body->quadTreeData = quadTreeData;
+
+	if (body->type == VolumeType::Sphere)
+	{
+		quadTreeData->bounds = Rectangle2D(
+			math::Vector2D(body->position.x, body->position.y),
+			math::Vector2D(body->sphereVolume.radius, body->sphereVolume.radius));
+
+		m_quadTree->Insert(*quadTreeData);
+	}
+	else if (body->type == VolumeType::AABB)
+	{
+		quadTreeData->bounds = Rectangle2D(
+			math::Vector2D(body->position.x, body->position.y),
+			math::Vector2D(body->aabbVolume.size.x, body->aabbVolume.size.y));
+
+		m_quadTree->Insert(*quadTreeData);
+	}
+	else if (body->type == VolumeType::OBB)
+	{
+		quadTreeData->bounds = Rectangle2D(
+			math::Vector2D(body->position.x, body->position.y),
+			math::Vector2D(body->obbVolume.size.x, body->obbVolume.size.y));
+		
+		m_quadTree->Insert(*quadTreeData);
+	}
+	else
+	{
+		assert(true && "Invalid volume type PhysicsSystem::InsertQuadTree()");
+	}
+
+	return qtdIndex;
 }
 
 

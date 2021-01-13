@@ -1,17 +1,19 @@
 #pragma once
 
 #include "Geometry2D.h"
-#include "RigidBody.h"
 
 #include <vector>
 
 struct QuadTreeData 
 {
-	RigidBody*  object;
+	void*       object{ nullptr };
 	Rectangle2D bounds;
 	bool        flag;
 
-	QuadTreeData(RigidBody* o, const Rectangle2D& b) : 
+	QuadTreeData() :
+		flag(false) { }
+
+	QuadTreeData(void* o, const Rectangle2D& b) :
 		object(o), bounds(b), flag(false) { }
 };
 

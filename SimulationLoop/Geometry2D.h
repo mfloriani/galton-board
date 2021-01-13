@@ -9,6 +9,7 @@ struct Rectangle2D
 
 	Rectangle2D() : size(1, 1) { }
 	Rectangle2D(const math::Vector2D& o, const math::Vector2D& s) : origin(o), size(s) { }
+	
 
 };
 

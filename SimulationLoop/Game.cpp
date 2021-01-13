@@ -443,8 +443,8 @@ void Game::Board()
 	// back
 	//m_physicsSys->AddStaticRigidBody(
 	//	CreateStaticAABB(
-	//		math::Vector3D(0.0f, -5.f, -5.f),
-	//		math::Vector3D(20.0f, 40.0f, 1.0f),
+	//		math::Vector3D(0.0f, -5.f, -15.f),
+	//		math::Vector3D(30.0f, 50.0f, 1.0f),
 	//		GRAY
 	//	));
 

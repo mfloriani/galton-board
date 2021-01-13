@@ -1,6 +1,10 @@
 #pragma once
 
 #include "RigidBody.h"
+#include "QuadTree.h"
+
+#include <memory>
+#include <unordered_map>
 
 class PhysicsSystem
 {
@@ -32,6 +36,13 @@ public:
 	void UpdateFriction(float friction);
 
 private:
+	//typedef unsigned int rBodyId;
+	//typedef size_t quadTreeDataIndex;
+
+	std::unique_ptr<QuadTree>  m_quadTree;
+	std::vector<QuadTreeData>  m_quadTreeData;
+	//std::unordered_map<rBodyId, quadTreeDataIndex> m_rBodyQTD; // rigidbody id x m_quadTreeData index
+
 	std::vector<RigidBody*>    m_staticBodies;
 	std::vector<RigidBody*>    m_bodies;
 	std::vector<RigidBody*>    m_collidersA;
@@ -41,12 +52,9 @@ private:
 	std::vector<OBB>           m_constraints;
 #endif
 	
-	// Smaller = more accurate [0.01 to 0.1] 
-	float m_penetrationSlack{ 0.01f };
-	// Smaller = less jitter / more penetration [0.2 to 0.8]
-	float m_linearProjectionPercent{ 0.2f };
-	// More interations more accurate [1 to 20]
-	int m_impulseIteration{ 20 };
+	float m_penetrationSlack{ 0.01f }; // Smaller = more accurate [0.01 to 0.1] 	
+	float m_linearProjectionPercent{ 0.2f }; // Smaller = less jitter / more penetration [0.2 to 0.8]	
+	int m_impulseIteration{ 20 };// More interations more accurate [1 to 20]
 
 	static ManifoldPoint CheckCollision(const RigidBody& A, const RigidBody& B);
 	static ManifoldPoint CheckCollision(const Sphere& A, const Sphere& B);
@@ -56,5 +64,6 @@ private:
 
 private:	
 	void AvoidSinking();
+	size_t InsertQuadTree(RigidBody* body);
 	
 };
