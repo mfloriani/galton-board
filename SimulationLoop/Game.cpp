@@ -5,6 +5,7 @@
 
 #include <random>
 #include <time.h>
+#include <iostream>
 
 float Game::frictionMag = FRICTION_MAG_DEFAULT;
 float Game::restitutionMag = RESTITUTION_MAG_DEFAULT;
@@ -14,24 +15,32 @@ bool Game::debugBoard = false;
 
 Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 {
-	camera = new Camera( math::Vector3D(0, 0, 150) );
-
-	Renderer::Init();
-
-	m_physicsSys = new PhysicsSystem();
 	
-	srand(time(0));
-
-	Board();
-
-	QueryPerformanceFrequency(&frequency);
-	QueryPerformanceCounter(&start);
 }
 
 Game::~Game(void)
 {
 	delete camera;
 	delete m_physicsSys;
+}
+
+bool Game::Init()
+{
+	camera = new Camera(math::Vector3D(0, 0, 150));
+
+	if (!Renderer::Init())
+		return false;
+
+	m_physicsSys = new PhysicsSystem();
+
+	srand(time(0));
+
+	Board();
+
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&start);
+
+	return true;
 }
 
 void Game::Update(float dt)
@@ -233,6 +242,16 @@ RigidBody* Game::CreateStaticOBB(math::Vector3D pos, math::Vector3D size, math::
 	return body;
 }
 
+void Game::Log()
+{
+	const auto totalBalls = m_physicsSys->Bodies().size();
+
+	std::cout << "\n";
+	std::cout << "Total Balls: " << totalBalls << "\n";
+	std::cout << "Restitution: " << restitutionMag << "\n";
+	std::cout << "Friction:    " << frictionMag << "\n";
+}
+
 
 void Game::SpawnBall()
 {
@@ -244,6 +263,7 @@ void Game::SpawnBall()
 	m_physicsSys->AddRigidBody(
 		CreateBall(math::Vector3D(x, 40 + y, 0))
 	);
+	Log();
 }
 
 void Game::SpawnBall(int x, int y)
@@ -251,6 +271,7 @@ void Game::SpawnBall(int x, int y)
 	m_physicsSys->AddRigidBody(
 		CreateBall(math::Vector3D(x, y, 0))
 	);
+	Log();
 }
 
 void Game::SpawnOBB()
@@ -298,6 +319,7 @@ void Game::SpawnBalls()
 		x += BALL_SPAWN_DIST_x;
 	}
 #endif
+	Log();
 }
 
 void Game::Reset()
@@ -433,6 +455,7 @@ void Game::IncreaseFriction()
 	frictionMag += FRICTION_RATE;
 	//if (frictionMag > 1.f) frictionMag = 1.f;
 	m_physicsSys->UpdateFriction(frictionMag);
+	Log();
 }
 
 void Game::DecreaseFriction()
@@ -440,6 +463,7 @@ void Game::DecreaseFriction()
 	frictionMag -= FRICTION_RATE;
 	if (frictionMag < 0.f) frictionMag = 0.f;
 	m_physicsSys->UpdateFriction(frictionMag);
+	Log();
 }
 
 void Game::IncreaseBallSize()
@@ -461,6 +485,7 @@ void Game::IncreaseRestitution()
 	restitutionMag += RESTORATION_RATE;
 	//if (restitutionMag > 1.0f) restitutionMag = 1.f;
 	m_physicsSys->UpdateRestitution(restitutionMag);
+	Log();
 }
 
 void Game::DecreaseRestitution()
@@ -468,6 +493,7 @@ void Game::DecreaseRestitution()
 	restitutionMag -= RESTORATION_RATE;
 	if (restitutionMag < 0.1f) restitutionMag = 0.1f;
 	m_physicsSys->UpdateRestitution(restitutionMag);
+	Log();
 }
 
 void Game::ToggleDebugMode()

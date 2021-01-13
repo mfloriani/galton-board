@@ -24,6 +24,7 @@ public:
 	static bool  debugMode;
 	static bool  debugBoard;
 
+	bool Init();
 	void Update(float dt);
 	void Render();
 
@@ -62,8 +63,7 @@ private:
 	PhysicsSystem* m_physicsSys;
 	LARGE_INTEGER start, end, frequency;
 
-private:
-	
+private:	
 	void SpawnBalls();
 	void AddPegs();
 	void AddBins();
@@ -72,5 +72,6 @@ private:
 	RigidBody* CreateStaticAABB(math::Vector3D pos, math::Vector3D size, math::Vector3D color);
 	RigidBody* CreateStaticOBB(math::Vector3D pos, math::Vector3D size, math::Matrix3 orientation, math::Vector3D color);
 
+	void Log();
 };
 
