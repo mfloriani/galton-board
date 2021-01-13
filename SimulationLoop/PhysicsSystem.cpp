@@ -135,6 +135,12 @@ void PhysicsSystem::ClearConstraints()
 void PhysicsSystem::Reset()
 {
 	ClearRigidBodies();
+	ClearStaticRigidBodies();
+
+	m_collidersA.clear();
+	m_collidersB.clear();
+	m_results.clear();
+
 #ifdef CONSTRAINT_BOARD
 	ClearConstraints();
 #endif
@@ -148,14 +154,20 @@ void PhysicsSystem::UpdateBallSize(float ballSize)
 
 void PhysicsSystem::UpdateRestitution(float restitution)
 {
-	for (auto b : m_bodies)
-		b->restitution = restitution;
+	for (auto db : m_bodies)
+		db->restitution = restitution;
+
+	for (auto sb : m_staticBodies)
+		sb->restitution = restitution;
 }
 
 void PhysicsSystem::UpdateFriction(float friction)
 {
-	for (auto b : m_bodies)
-		b->friction = friction;
+	for (auto db : m_bodies)
+		db->friction = friction;
+
+	for (auto sb : m_staticBodies)
+		sb->friction = friction;
 }
 
 void PhysicsSystem::AvoidSinking()
@@ -217,6 +229,10 @@ ManifoldPoint PhysicsSystem::CheckCollision(const RigidBody& A, const RigidBody&
 		{
 			result = CheckCollision(A.obbVolume, B.sphereVolume);
 		}
+		//else if (B.type == VolumeType::OBB)
+		//{
+		//	result = CheckCollision(A.obbVolume, B.obbVolume);
+		//}
 	}
 
 	return result;

@@ -148,7 +148,7 @@ bool Raycast(const OBB& obb, const Ray& ray, RaycastResult* outResult);
 
 
 
-#if 0
+#if 1
 
 float PenetrationDepth(const OBB& o1, const OBB& o2, math::Vector3D& axis, bool* outShouldFlip);
 Interval GetInterval(const OBB& obb, const math::Vector3D& axis);

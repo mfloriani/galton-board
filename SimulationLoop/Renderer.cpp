@@ -10,14 +10,14 @@ void Renderer::Init()
 
 void Renderer::DrawSphere(const Sphere& s)
 {
-    glEnable(GL_TEXTURE_2D);
-    //glDisable(GL_TEXTURE_2D);
+    //glEnable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);
 
     glPushMatrix();
 	glTranslatef(s.position.x, s.position.y, 0);
     glColor3f(s.color.x, s.color.y, s.color.z);
 
-	glBindTexture(GL_TEXTURE_2D, m_sphereTex);
+	//glBindTexture(GL_TEXTURE_2D, m_sphereTex);
 	GLUquadric* quadric = gluNewQuadric();
 	gluQuadricDrawStyle(quadric, GLU_FILL);
 	gluQuadricTexture(quadric, GL_TRUE);

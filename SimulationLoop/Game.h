@@ -19,6 +19,7 @@ public:
 	~Game(void);
 
 	Camera* camera;
+
 	static float frictionMag;
 	static float restitutionMag;
 	static float ballSize;
@@ -28,6 +29,7 @@ public:
 	void Render();
 
 	static RigidBody* CreateBall(math::Vector3D pos);
+	static RigidBody* CreateCube(math::Vector3D pos);
 	
 	void Reset();
 	void Board();
@@ -35,6 +37,7 @@ public:
 	void DebugBoard();
 	void SpawnBall();
 	void SpawnBall(int x, int y);
+	void SpawnOBB();
 	void PauseResume();
 	void IncreaseTimeScale();
 	void DecreaseTimeScale();

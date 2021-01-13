@@ -76,6 +76,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				break;
 			case VK_2:
 				// add cube
+				game->SpawnOBB();
 				break;
 			case VK_R:
 				// reset
