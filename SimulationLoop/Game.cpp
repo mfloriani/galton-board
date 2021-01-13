@@ -10,6 +10,7 @@ float Game::frictionMag = FRICTION_MAG_DEFAULT;
 float Game::restitutionMag = RESTITUTION_MAG_DEFAULT;
 float Game::ballSize = BALL_SIZE_DEFAULT;
 bool Game::debugMode = false;
+bool Game::debugBoard = false;
 
 Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 {
@@ -58,7 +59,9 @@ void Game::Render()
 
 	math::Matrix4& view = camera->UpdateView();
 	glMultMatrixf(view.data());
-	
+
+#if 1
+
 	for (auto b : m_physicsSys->Bodies())
 	{
 		if(b->type == VolumeType::Sphere)
@@ -69,10 +72,6 @@ void Game::Render()
 			Renderer::DrawAABBCube(b->aabbVolume);
 	}
 
-#ifdef CONSTRAINT_BOARD
-	for (auto& b : m_physicsSys->Constraints())
-		Renderer::DrawOBBCube(b);
-#else
 	for (auto b : m_physicsSys->StaticBodies())
 	{
 		if (b->type == VolumeType::Sphere)
@@ -82,7 +81,12 @@ void Game::Render()
 		else if (b->type == VolumeType::AABB)
 			Renderer::DrawAABBCube(b->aabbVolume);
 	}
+
 #endif
+
+	if(debugMode)
+		m_physicsSys->Render();
+
 	SwapBuffers(m_hdc);
 }
 
@@ -125,16 +129,6 @@ void Game::AddPegs()
 		{
 			for (int j = -16; j < 17; j += 4)
 			{
-#ifdef CONSTRAINT_BOARD
-				m_physicsSys->AddConstraint(
-					OBB(math::Vector3D(j, PEG_Y, PEG_Z),
-						math::Vector3D(1.0f, 1.0f, 1.0f),
-						math::rotation3x3(0, 0, 45),
-						PEG_COLOR)
-				);
-
-#else
-
 #ifndef PEG_SHAPE_SPHERE
 
 				m_physicsSys->AddStaticRigidBody(
@@ -155,23 +149,12 @@ void Game::AddPegs()
 					));
 
 #endif // !PEG_SPHERE
-
-#endif // CONSTRAINT_BOARD
 			}
 		}
 		else
 		{
 			for (int j = -18; j < 19; j += 4)
 			{
-#ifdef CONSTRAINT_BOARD
-				m_physicsSys->AddConstraint(
-					OBB(math::Vector3D(j, PEG_Y, PEG_Z),
-						math::Vector3D(1.0f, 1.0f, 1.0f),
-						math::rotation3x3(0, 0, 45),
-						PEG_COLOR)
-				);
-#else
-
 #ifndef PEG_SHAPE_SPHERE
 
 				m_physicsSys->AddStaticRigidBody(
@@ -192,8 +175,6 @@ void Game::AddPegs()
 
 
 #endif // !PEG_SHAPE_SPHERE
-
-#endif // CONSTRAINT_BOARD
 			}
 		}
 	}
@@ -205,21 +186,12 @@ void Game::AddBins()
 
 	for (int i = 0; i < 9; ++i)
 	{
-#ifdef CONSTRAINT_BOARD
-		m_physicsSys->AddConstraint(
-			OBB(math::Vector3D(BIN_X, -35.f, 0.f),
-				math::Vector3D(0.3f, 10.0f, 1.0f),
-				math::rotation3x3(0, 0, 0),
-				BLACK)
-		);
-#else
 		m_physicsSys->AddStaticRigidBody(
 			CreateStaticAABB(
 				math::Vector3D(BIN_X, -35.f, 0.f),
 				math::Vector3D(0.3f, 10.0f, 1.0f),
 				BLACK
 			));
-#endif
 		BIN_X += 4.0;
 	}
 }
@@ -330,7 +302,7 @@ void Game::SpawnBalls()
 
 void Game::Reset()
 {
-	if (debugMode)
+	if (debugBoard)
 		DebugBoard();
 	else
 		Board();
@@ -349,62 +321,6 @@ void Game::Board()
 	AddPegs();
 	AddBins();
 	
-#ifdef CONSTRAINT_BOARD
-
-	// left funnel
-	m_physicsSys->AddConstraint(		
-		OBB(math::Vector3D(-12.0f, 28.f, 0.f),
-			math::Vector3D(12.0f, 1.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, -35.f),
-			BLACK)
-	);
-	
-
-	// right funnel
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(12.0f, 28.f, 0.f),
-			math::Vector3D(12.0f, 1.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 35.f),
-			BLACK)
-	);
-
-
-	// left
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(-21.0f, -5.f, 0.f),
-			math::Vector3D(1.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
-
-
-	// right
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(21.0f, -5.f, 0.f),
-			math::Vector3D(1.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
-
-
-	// back
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -5.f, -2.f),
-			math::Vector3D(20.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			GRAY)
-	);
-
-	// bottom
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -46.f, 0.f),
-			math::Vector3D(22.0f, 2.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
-
-#else // STATIC_BOARD
-
 	// left funnel
 	m_physicsSys->AddStaticRigidBody(
 		CreateStaticOBB(
@@ -455,8 +371,6 @@ void Game::Board()
 			math::Vector3D(22.0f, 2.0f, 1.0f),
 			BLACK
 		));
-
-#endif
 
 	SpawnBalls();
 }
@@ -559,7 +473,12 @@ void Game::DecreaseRestitution()
 void Game::ToggleDebugMode()
 {
 	debugMode = !debugMode;
-	if (debugMode)
+}
+
+void Game::ToggleDebugBoard()
+{
+	debugBoard = !debugBoard;
+	if (debugBoard)
 		DebugBoard();
 	else
 		Board();

@@ -29,9 +29,6 @@ public:
 	void AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse);
 #endif
 
-#ifdef CONSTRAINT_BOARD
-	void SolveConstraints(const std::vector<OBB>& constraints);
-#endif
 	static void ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);
 
 public:
@@ -56,8 +53,7 @@ public:
 	OBB            obbVolume;
 
 	unsigned int   id;
-	//size_t         quadTreeDataIndex;
-	QuadTreeData* quadTreeData{ nullptr };
+	QuadTreeData*  quadTreeData{ nullptr };
 
 private:
 	math::Vector3D m_forces;

@@ -13,18 +13,14 @@ public:
 	~PhysicsSystem();
 
 	void Update(float dt);
+	void Render();
+	void RenderQuadTree(QuadTree& quadTree);
 
 	void AddRigidBody(RigidBody* body);
 	void AddStaticRigidBody(RigidBody* body);
 	
 	void ClearRigidBodies();
 	void ClearStaticRigidBodies();
-
-#ifdef CONSTRAINT_BOARD
-	void AddConstraint(OBB& constraint);
-	void ClearConstraints();
-	const std::vector<OBB>& Constraints() const { return m_constraints; }
-#endif
 
 	void Reset();
 
@@ -36,21 +32,14 @@ public:
 	void UpdateFriction(float friction);
 
 private:
-	//typedef unsigned int rBodyId;
-	//typedef size_t quadTreeDataIndex;
-
 	std::unique_ptr<QuadTree>  m_quadTree;
 	std::vector<QuadTreeData>  m_quadTreeData;
-	//std::unordered_map<rBodyId, quadTreeDataIndex> m_rBodyQTD; // rigidbody id x m_quadTreeData index
-
+	
 	std::vector<RigidBody*>    m_staticBodies;
 	std::vector<RigidBody*>    m_bodies;
 	std::vector<RigidBody*>    m_collidersA;
 	std::vector<RigidBody*>    m_collidersB;
 	std::vector<ManifoldPoint> m_results;
-#ifdef CONSTRAINT_BOARD
-	std::vector<OBB>           m_constraints;
-#endif
 	
 	float m_penetrationSlack{ 0.01f }; // Smaller = more accurate [0.01 to 0.1] 	
 	float m_linearProjectionPercent{ 0.2f }; // Smaller = less jitter / more penetration [0.2 to 0.8]	
@@ -65,5 +54,4 @@ private:
 private:	
 	void AvoidSinking();
 	size_t InsertQuadTree(RigidBody* body);
-	
 };

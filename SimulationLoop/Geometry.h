@@ -4,6 +4,7 @@
 #include "Math\Vector3D.h"
 #include "Math\Matrix3.h"
 #include "Utils.h"
+#include "Geometry2D.h"
 
 struct ManifoldPoint
 {
@@ -29,13 +30,20 @@ struct AABB
 	math::Vector3D position;
 	math::Vector3D size;
 	math::Vector3D color;
+	Rectangle2D    bounds;
 
 	AABB() 
 		: size(1.f, 1.f, 1.f){}
 	AABB(const math::Vector3D& p, const math::Vector3D& s) 
-		: position(p), size(s){}
+		: position(p), size(s)
+	{
+		FillRect2dFrom3d(bounds, p, s);
+	}
 	AABB(const math::Vector3D& p, const math::Vector3D& s, const math::Vector3D c)
-		: position(p), size(s), color(c){}
+		: position(p), size(s), color(c)
+	{
+		FillRect2dFrom3d(bounds, p, s);
+	}
 };
 
 struct OBB
@@ -44,15 +52,25 @@ struct OBB
 	math::Vector3D size;
 	math::Matrix3  orientation;
 	math::Vector3D color;
+	Rectangle2D    bounds;
 
 	OBB() 
 		: size(1.f, 1.f, 1.f) {}
 	OBB(const math::Vector3D& p, const math::Vector3D& s) 
-		: position(p), size(s){}
+		: position(p), size(s)
+	{
+		 FillRect2dFrom3d(bounds, p, s);
+	}
 	OBB(const math::Vector3D& p, const math::Vector3D& s, const math::Matrix3& o) 
-		: position(p), size(s), orientation(o){}
+		: position(p), size(s), orientation(o)
+	{
+		FillRect2dFrom3d(bounds, p, s);
+	}
 	OBB(const math::Vector3D& p, const math::Vector3D& s, const math::Matrix3& o, const math::Vector3D c) 
-		: position(p), size(s), orientation(o), color(c){}
+		: position(p), size(s), orientation(o), color(c)
+	{
+		FillRect2dFrom3d(bounds, p, s);
+	}
 };
 
 struct Sphere
@@ -60,13 +78,20 @@ struct Sphere
 	math::Vector3D position;
 	float          radius;
 	math::Vector3D color;
+	Rectangle2D    bounds;
 
 	Sphere() 
 		: radius(5) {}
-	Sphere(const math::Vector3D& pos, float r)
-		: position(pos), radius(r){}
-	Sphere(const math::Vector3D& pos, float r, const math::Vector3D c)
-		: position(pos), radius(r), color(c){}
+	Sphere(const math::Vector3D& p, float r)
+		: position(p), radius(r)
+	{
+		FillRect2dFrom3d(bounds, p, r);
+	}
+	Sphere(const math::Vector3D& p, float r, const math::Vector3D c)
+		: position(p), radius(r), color(c)
+	{
+		FillRect2dFrom3d(bounds, p, r);
+	}
 };
 
 struct Interval 

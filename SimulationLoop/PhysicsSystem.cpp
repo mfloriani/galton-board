@@ -1,20 +1,18 @@
 #include "PhysicsSystem.h"
 #include "Geometry.h"
 #include "Constants.h"
+#include "Renderer.h"
 
 #include <cassert>
 
 PhysicsSystem::PhysicsSystem()
 {
-	m_bodies.reserve(500);
-	m_collidersA.reserve(500);
-	m_collidersB.reserve(500);
-	m_results.reserve(500);
-	m_staticBodies.reserve(500);
-
-	m_quadTree = std::make_unique<QuadTree>(
-		Rectangle2D(math::Vector2D(0,0), math::Vector2D(WND_WIDTH, WND_HEIGHT))
-	);
+	m_bodies.reserve(1000);
+	m_collidersA.reserve(1000);
+	m_collidersB.reserve(1000);
+	m_results.reserve(1000);
+	m_staticBodies.reserve(1000);
+	m_quadTreeData.reserve(1000);
 }
 
 PhysicsSystem::~PhysicsSystem()
@@ -28,6 +26,8 @@ void PhysicsSystem::Update(float dt)
 	m_collidersA.clear();
 	m_collidersB.clear();
 	m_results.clear();
+
+#if 0
 
 	for (int i = 0, size = m_bodies.size(); i < size; ++i)
 	{
@@ -49,7 +49,6 @@ void PhysicsSystem::Update(float dt)
 		}
 	}
 
-#ifndef CONSTRAINT_BOARD
 	for (auto dBody : m_bodies)
 	{
 		for (auto sBody : m_staticBodies)
@@ -64,7 +63,34 @@ void PhysicsSystem::Update(float dt)
 			}
 		}
 	}
-#endif // !CONSTRAINT_BOARD
+
+#else
+
+	for (int i = 0, size = m_bodies.size(); i < size; ++i)
+	{
+		RigidBody* rb1 = m_bodies[i];
+
+		auto neighbors = m_quadTree->Query(rb1->sphereVolume.bounds); // TODO: currently fixed to sphereVolume
+
+		for (auto& data : neighbors)
+		{
+			ManifoldPoint result;
+
+			RigidBody* rb2 = static_cast<RigidBody*>(data->object);
+			if (rb2)
+			{
+				result = CheckCollision(*rb1, *rb2);
+				if (result.colliding)
+				{
+					m_collidersA.push_back(rb1);
+					m_collidersB.push_back(rb2);
+					m_results.push_back(result);
+				}
+			}
+		}
+	}
+
+#endif
 
 	for (auto body : m_bodies)
 		body->ApplyForces();
@@ -85,56 +111,51 @@ void PhysicsSystem::Update(float dt)
 
 	for (auto body : m_bodies)
 		body->Update(dt);
-
-	// Linear projection to avoid sinking
-	AvoidSinking();
 	
-#ifdef CONSTRAINT_BOARD
-	for (auto body : m_bodies)
-		body->SolveConstraints(m_constraints);
-#endif
+	AvoidSinking(); // Linear projection to avoid sinking
 
+	for (auto body : m_bodies)
+		m_quadTree->Update(*body->quadTreeData);
+}
+
+void PhysicsSystem::Render()
+{
+	RenderQuadTree(*m_quadTree.get());
+	
+	for (auto& data : m_quadTreeData)
+		Renderer::DrawRect(data.bounds, GREEN);
+}
+
+void PhysicsSystem::RenderQuadTree(QuadTree& quadTree)
+{
+	// TODO: create a dynamic way of rendering all children (recursive?)
+	Renderer::DrawRect(quadTree.NodeBounds(), MAGENTA);
+	if (!quadTree.IsLeaf())
+	{
+		for (auto& child : quadTree.Children())
+			RenderQuadTree(const_cast<QuadTree&>(child));
+	}
 }
 
 void PhysicsSystem::AddRigidBody(RigidBody* body)
 {
+	InsertQuadTree(body); // insert the body into quad tree and bound it to the body
+
 	body->SyncCollisionVolumes();
-
-	//InsertQuadTree(body); // insert the body into quad tree and bound it to the body
-
-	//auto quatTreeData = InsertQuadTree(body);
-	//body->quadTreeDataIndex = quatTreeData;
-
-	// map the rigidbody id with quad tree data
-	//m_rBodyQTD.insert(std::make_pair(body->id, quatTreeData));
-	
 	m_bodies.push_back(body);
 }
 
 void PhysicsSystem::AddStaticRigidBody(RigidBody* body)
 {
+	InsertQuadTree(body); // insert the body into quad tree and bound it to the body
+
 	body->SyncCollisionVolumes();
-
-	//InsertQuadTree(body); // insert the body into quad tree and bound it to the body
-
-	//auto quatTreeData = InsertQuadTree(body);
-	//body->quadTreeDataIndex = quatTreeData;
-
-	// map the rigidbody id with quad tree data
-	//m_rBodyQTD.insert(std::make_pair(body->id, quatTreeData));
-
 	m_staticBodies.push_back(body);
 }
 
-#ifdef CONSTRAINT_BOARD
-void PhysicsSystem::AddConstraint(OBB& constraint)
-{
-	m_constraints.push_back(constraint);
-}
-#endif
 
 void PhysicsSystem::ClearRigidBodies()
-{ 
+{
 	for (auto b : m_bodies)
 		delete b;
 
@@ -149,12 +170,6 @@ void PhysicsSystem::ClearStaticRigidBodies()
 	m_staticBodies.clear();
 }
 
-#ifdef CONSTRAINT_BOARD
-void PhysicsSystem::ClearConstraints()
-{
-	m_constraints.clear();
-}
-#endif
 
 void PhysicsSystem::Reset()
 {
@@ -165,9 +180,15 @@ void PhysicsSystem::Reset()
 	m_collidersB.clear();
 	m_results.clear();
 
-#ifdef CONSTRAINT_BOARD
-	ClearConstraints();
-#endif
+	m_quadTreeData.clear();
+
+	Rectangle2D screen;
+	FillRect2dFrom3d(screen, math::Vector3D(0, 0, 0), math::Vector3D(30, 100, 0));
+
+	if (m_quadTree.get())
+		m_quadTree.release();
+
+	m_quadTree = std::make_unique<QuadTree>(screen);
 }
 
 void PhysicsSystem::UpdateBallSize(float ballSize)
@@ -223,7 +244,7 @@ size_t PhysicsSystem::InsertQuadTree(RigidBody* body)
 	//get a index inside the vector to assign to the rigid body
 	m_quadTreeData.push_back(QuadTreeData());
 	auto qtdIndex = m_quadTreeData.size()-1;
-	QuadTreeData* quadTreeData = &m_quadTreeData[qtdIndex];
+	QuadTreeData* quadTreeData = &m_quadTreeData[qtdIndex];	
 	
 	// bound qtd and body
 	quadTreeData->object = body;
@@ -231,26 +252,17 @@ size_t PhysicsSystem::InsertQuadTree(RigidBody* body)
 
 	if (body->type == VolumeType::Sphere)
 	{
-		quadTreeData->bounds = Rectangle2D(
-			math::Vector2D(body->position.x, body->position.y),
-			math::Vector2D(body->sphereVolume.radius, body->sphereVolume.radius));
-
+		FillRect2dFrom3d(quadTreeData->bounds, body->sphereVolume.position, body->sphereVolume.radius);
 		m_quadTree->Insert(*quadTreeData);
 	}
 	else if (body->type == VolumeType::AABB)
 	{
-		quadTreeData->bounds = Rectangle2D(
-			math::Vector2D(body->position.x, body->position.y),
-			math::Vector2D(body->aabbVolume.size.x, body->aabbVolume.size.y));
-
+		FillRect2dFrom3d(quadTreeData->bounds, body->aabbVolume.position, body->aabbVolume.size);
 		m_quadTree->Insert(*quadTreeData);
 	}
 	else if (body->type == VolumeType::OBB)
 	{
-		quadTreeData->bounds = Rectangle2D(
-			math::Vector2D(body->position.x, body->position.y),
-			math::Vector2D(body->obbVolume.size.x, body->obbVolume.size.y));
-		
+		FillRect2dFrom3d(quadTreeData->bounds, body->obbVolume.position, body->obbVolume.size);
 		m_quadTree->Insert(*quadTreeData);
 	}
 	else
