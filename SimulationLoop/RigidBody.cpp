@@ -2,7 +2,9 @@
 #include "Game.h"
 
 RigidBody::RigidBody()
-{	
+{
+	static unsigned int nextId = 0;
+	id = ++nextId;
 }
 
 RigidBody::~RigidBody()
@@ -69,8 +71,24 @@ void RigidBody::Update(float dt)
 void RigidBody::SyncCollisionVolumes()
 {
 	sphereVolume.position = position;
+	FillRect2dOriginFrom3d(sphereVolume.bounds.origin, sphereVolume.position, sphereVolume.radius);
+
 	aabbVolume.position = position;
+	FillRect2dOriginFrom3d(aabbVolume.bounds.origin, aabbVolume.position, aabbVolume.size);
+
 	obbVolume.position = position;
+	FillRect2dOriginFrom3d(obbVolume.bounds.origin, obbVolume.position, obbVolume.size);
+
+	// keep quad tree data up to date
+	if (quadTreeData)
+	{
+		if (type == VolumeType::Sphere)
+			quadTreeData->bounds.origin = sphereVolume.bounds.origin;
+		else if (type == VolumeType::AABB)
+			quadTreeData->bounds.origin = aabbVolume.bounds.origin;
+		else 
+			quadTreeData->bounds.origin = obbVolume.bounds.origin;
+	}
 
 #ifdef ANGULAR_VELOCITY
 	obbVolume.orientation = math::rotation3x3(
@@ -130,46 +148,6 @@ void RigidBody::AddRotationalImpulse(const math::Vector3D& point, const math::Ve
 	angularVel += angAccel;
 }
 #endif
-
-#ifdef CONSTRAINT_BOARD
-void RigidBody::SolveConstraints(const std::vector<OBB>& constraints)
-{
-	int size = constraints.size();
-	for (int i = 0; i < size; ++i) 
-	{
-		Line traveled(oldPosition, position);
-		//if (PointInOBB(position, constraints[i])) 
-		if (Linetest(constraints[i], traveled)) 
-		{
-#ifndef EULER_INTEGRATION
-			math::Vector3D velocity = position - oldPosition;
-#endif
-			math::Vector3D direction = math::normalize(velocity);
-			Ray ray(oldPosition, direction);
-			RaycastResult result;
-
-			if (Raycast(constraints[i], ray, &result)) 
-			{
-				// Place object just a little above collision result
-				position = result.point + result.normal * 0.003f;
-				//position = result.point + result.normal * (0.003f + sphereVolume.radius);
-
-				math::Vector3D vn = result.normal * result.normal.dot(velocity);
-				math::Vector3D vt = velocity - vn;
-
-#ifdef EULER_INTEGRATION
-				oldPosition = position;
-				velocity = vt - vn * restitution;
-#else
-				oldPosition = position - (vt - vn * restitution);
-#endif
-				break;
-			}
-		}
-	}
-}
-#endif
-
 
 void RigidBody::ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c)
 {

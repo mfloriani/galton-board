@@ -10,6 +10,7 @@ float Game::frictionMag = FRICTION_MAG_DEFAULT;
 float Game::restitutionMag = RESTITUTION_MAG_DEFAULT;
 float Game::ballSize = BALL_SIZE_DEFAULT;
 bool Game::debugMode = false;
+bool Game::debugBoard = false;
 
 Game::Game(HDC hdc) : m_hdc(hdc), m_previousTime(0)
 {
@@ -46,7 +47,7 @@ void Game::Update(float dt)
 	m_dt *= m_timeScale;
 
 	if(!m_paused)
-		m_physicsSys->Update(dt);
+		m_physicsSys->Update(dt * m_timeScale);
 
 	Render();
 }
@@ -58,7 +59,9 @@ void Game::Render()
 
 	math::Matrix4& view = camera->UpdateView();
 	glMultMatrixf(view.data());
-	
+
+#if 1
+
 	for (auto b : m_physicsSys->Bodies())
 	{
 		if(b->type == VolumeType::Sphere)
@@ -69,10 +72,6 @@ void Game::Render()
 			Renderer::DrawAABBCube(b->aabbVolume);
 	}
 
-#ifdef CONSTRAINT_BOARD
-	for (auto& b : m_physicsSys->Constraints())
-		Renderer::DrawOBBCube(b);
-#else
 	for (auto b : m_physicsSys->StaticBodies())
 	{
 		if (b->type == VolumeType::Sphere)
@@ -82,7 +81,12 @@ void Game::Render()
 		else if (b->type == VolumeType::AABB)
 			Renderer::DrawAABBCube(b->aabbVolume);
 	}
+
 #endif
+
+	if(debugMode)
+		m_physicsSys->Render();
+
 	SwapBuffers(m_hdc);
 }
 
@@ -94,7 +98,19 @@ RigidBody* Game::CreateBall(math::Vector3D pos)
 	body->friction = frictionMag;
 	body->restitution = restitutionMag;
 	body->type = VolumeType::Sphere;
-	body->sphereVolume = Sphere(pos, ballSize, WHITE);
+	body->sphereVolume = Sphere(pos, ballSize, BALL_COLOR);
+	return body;
+}
+
+RigidBody* Game::CreateCube(math::Vector3D pos)
+{
+	RigidBody* body = new RigidBody();
+	body->position = pos;
+	body->mass = CUBE_MASS;
+	body->friction = frictionMag;
+	body->restitution = restitutionMag;
+	body->type = VolumeType::OBB;
+	body->obbVolume = OBB(pos, CUBE_SIZE, math::rotation3x3(0.f,0.f,45.f), CUBE_COLOR);
 	return body;
 }
 
@@ -113,38 +129,52 @@ void Game::AddPegs()
 		{
 			for (int j = -16; j < 17; j += 4)
 			{
-#ifdef CONSTRAINT_BOARD
-				m_physicsSys->AddConstraint(
-					OBB(math::Vector3D(j, PEG_Y, PEG_Z),
-						math::Vector3D(1.0f, 1.0f, 1.0f),
-						math::rotation3x3(0, 0, 45),
-						PEG_COLOR)
-				);
-#else
+#ifndef PEG_SHAPE_SPHERE
+
 				m_physicsSys->AddStaticRigidBody(
 					CreateStaticOBB(
 						math::Vector3D(j, PEG_Y, PEG_Z),
-						math::Vector3D(1.0f, 1.0f, 1.0f),
+						math::Vector3D(PEG_OBB_SIZE, PEG_OBB_SIZE, 1.0f),
 						math::rotation3x3(0, 0, 45),
 						PEG_COLOR
 					));
-#endif
+
+#else
+
+				m_physicsSys->AddStaticRigidBody(
+					CreateStaticSphere(
+						math::Vector3D(j, PEG_Y, PEG_Z),
+						PEG_SPHERE_SIZE,
+						PEG_COLOR
+					));
+
+#endif // !PEG_SPHERE
 			}
 		}
 		else
 		{
 			for (int j = -18; j < 19; j += 4)
 			{
-#ifdef CONSTRAINT_BOARD
-				m_physicsSys->AddConstraint(
-					OBB(math::Vector3D(j, PEG_Y, PEG_Z),
-						math::Vector3D(1.0f, 1.0f, 1.0f),
-						math::rotation3x3(0, 0, 45),
-						PEG_COLOR)
-				);
-#else
+#ifndef PEG_SHAPE_SPHERE
 
-#endif
+				m_physicsSys->AddStaticRigidBody(
+					CreateStaticOBB(
+						math::Vector3D(j, PEG_Y, PEG_Z),
+						math::Vector3D(PEG_OBB_SIZE, PEG_OBB_SIZE, 1.0f),
+						math::rotation3x3(0, 0, 45),
+						PEG_COLOR
+					));
+
+#else
+				m_physicsSys->AddStaticRigidBody(
+					CreateStaticSphere(
+						math::Vector3D(j, PEG_Y, PEG_Z),
+						PEG_SPHERE_SIZE,
+						PEG_COLOR
+					));
+
+
+#endif // !PEG_SHAPE_SPHERE
 			}
 		}
 	}
@@ -156,21 +186,12 @@ void Game::AddBins()
 
 	for (int i = 0; i < 9; ++i)
 	{
-#ifdef CONSTRAINT_BOARD
-		m_physicsSys->AddConstraint(
-			OBB(math::Vector3D(BIN_X, -35.f, 0.f),
-				math::Vector3D(0.3f, 10.0f, 1.0f),
-				math::rotation3x3(0, 0, 0),
-				BLACK)
-		);
-#else
 		m_physicsSys->AddStaticRigidBody(
 			CreateStaticAABB(
 				math::Vector3D(BIN_X, -35.f, 0.f),
 				math::Vector3D(0.3f, 10.0f, 1.0f),
 				BLACK
 			));
-#endif
 		BIN_X += 4.0;
 	}
 }
@@ -181,8 +202,8 @@ RigidBody* Game::CreateStaticSphere(math::Vector3D pos, float radius, math::Vect
 	RigidBody* body = new RigidBody();
 	body->position = pos;
 	body->mass = 0;
-	body->friction = 0;
-	body->restitution = 0;
+	body->friction = FRICTION_MAG_DEFAULT;
+	body->restitution = RESTITUTION_MAG_DEFAULT;
 	body->type = VolumeType::Sphere;
 	body->sphereVolume = Sphere(pos, radius, color);
 	return body;
@@ -193,8 +214,8 @@ RigidBody* Game::CreateStaticAABB(math::Vector3D pos, math::Vector3D size, math:
 	RigidBody* body = new RigidBody();
 	body->position = pos;
 	body->mass = 0;
-	body->friction = 0;
-	body->restitution = 0;
+	body->friction = FRICTION_MAG_DEFAULT;
+	body->restitution = RESTITUTION_MAG_DEFAULT;
 	body->type = VolumeType::AABB;
 	body->aabbVolume = AABB(pos, size, color);
 	return body;
@@ -205,8 +226,8 @@ RigidBody* Game::CreateStaticOBB(math::Vector3D pos, math::Vector3D size, math::
 	RigidBody* body = new RigidBody();
 	body->position = pos;
 	body->mass = 0;
-	body->friction = 0;
-	body->restitution = 0;
+	body->friction = FRICTION_MAG_DEFAULT;
+	body->restitution = RESTITUTION_MAG_DEFAULT;
 	body->type = VolumeType::OBB;
 	body->obbVolume = OBB(pos, size, orientation, color);
 	return body;
@@ -232,8 +253,21 @@ void Game::SpawnBall(int x, int y)
 	);
 }
 
+void Game::SpawnOBB()
+{
+	int x = rand() % 10;
+	int y = rand() % 10;
+
+	x = m_physicsSys->Bodies().size() % 2 == 0 ? x : -x;
+
+	m_physicsSys->AddRigidBody(
+		CreateCube(math::Vector3D(x, 40 + y, 0))
+	);
+}
+
 void Game::SpawnBalls()
 {
+#if 0
 	for (int i = 0; i < BALL_TOTAL; ++i)
 	{
 		int x = rand() % 10;
@@ -245,11 +279,30 @@ void Game::SpawnBalls()
 			CreateBall(math::Vector3D(x, 40 + y, 0))
 		);
 	}
+#else
+	int x = BALL_SPAWN_OFFSET_X;
+	int y = BALL_SPAWN_OFFSET_Y;
+
+	for (int i = 0; i < BALL_TOTAL; ++i)
+	{
+		if (i % BALL_MAX_PER_LINE == 0)
+		{
+			y += BALL_SPAWN_DIST_Y;
+			x = BALL_SPAWN_OFFSET_X;
+		}
+
+		m_physicsSys->AddRigidBody(
+			CreateBall(math::Vector3D(x, y, 0))
+		);
+
+		x += BALL_SPAWN_DIST_x;
+	}
+#endif
 }
 
 void Game::Reset()
 {
-	if (debugMode)
+	if (debugBoard)
 		DebugBoard();
 	else
 		Board();
@@ -268,62 +321,6 @@ void Game::Board()
 	AddPegs();
 	AddBins();
 	
-#ifdef CONSTRAINT_BOARD
-
-	// left funnel
-	m_physicsSys->AddConstraint(		
-		OBB(math::Vector3D(-12.0f, 28.f, 0.f),
-			math::Vector3D(12.0f, 1.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, -35.f),
-			BLACK)
-	);
-	
-
-	// right funnel
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(12.0f, 28.f, 0.f),
-			math::Vector3D(12.0f, 1.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 35.f),
-			BLACK)
-	);
-
-
-	// left
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(-21.0f, -5.f, 0.f),
-			math::Vector3D(1.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
-
-
-	// right
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(21.0f, -5.f, 0.f),
-			math::Vector3D(1.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
-
-
-	// back
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -5.f, -2.f),
-			math::Vector3D(20.0f, 40.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			GRAY)
-	);
-
-	// bottom
-	m_physicsSys->AddConstraint(
-		OBB(math::Vector3D(0.0f, -46.f, 0.f),
-			math::Vector3D(22.0f, 2.0f, 1.0f),
-			math::rotation3x3(0.f, 0.f, 0.f),
-			BLACK)
-	);
-
-#else // STATIC_BOARD
-
 	// left funnel
 	m_physicsSys->AddStaticRigidBody(
 		CreateStaticOBB(
@@ -362,8 +359,8 @@ void Game::Board()
 	// back
 	//m_physicsSys->AddStaticRigidBody(
 	//	CreateStaticAABB(
-	//		math::Vector3D(0.0f, -5.f, -5.f),
-	//		math::Vector3D(20.0f, 40.0f, 1.0f),
+	//		math::Vector3D(0.0f, -5.f, -15.f),
+	//		math::Vector3D(30.0f, 50.0f, 1.0f),
 	//		GRAY
 	//	));
 
@@ -374,8 +371,6 @@ void Game::Board()
 			math::Vector3D(22.0f, 2.0f, 1.0f),
 			BLACK
 		));
-
-#endif
 
 	SpawnBalls();
 }
@@ -436,7 +431,7 @@ void Game::DecreaseTimeScale()
 void Game::IncreaseFriction()
 {
 	frictionMag += FRICTION_RATE;
-	if (frictionMag > 1.f) frictionMag = 1.f;
+	//if (frictionMag > 1.f) frictionMag = 1.f;
 	m_physicsSys->UpdateFriction(frictionMag);
 }
 
@@ -464,7 +459,7 @@ void Game::DecreaseBallSize()
 void Game::IncreaseRestitution()
 {
 	restitutionMag += RESTORATION_RATE;
-	if (restitutionMag > 1.0f) restitutionMag = 1.f;
+	//if (restitutionMag > 1.0f) restitutionMag = 1.f;
 	m_physicsSys->UpdateRestitution(restitutionMag);
 }
 
@@ -478,7 +473,12 @@ void Game::DecreaseRestitution()
 void Game::ToggleDebugMode()
 {
 	debugMode = !debugMode;
-	if (debugMode)
+}
+
+void Game::ToggleDebugBoard()
+{
+	debugBoard = !debugBoard;
+	if (debugBoard)
 		DebugBoard();
 	else
 		Board();

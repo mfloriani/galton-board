@@ -8,16 +8,24 @@ void Renderer::Init()
 	m_sphereTex = TextureLoader::LoadBMP("checker.bmp");
 }
 
+void Renderer::DrawRect(const Rectangle2D& r, math::Vector3D c)
+{
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glColor3f(c.x, c.y, c.z);
+    glRectf(r.origin.x, r.origin.y, r.origin.x + r.size.x, r.origin.y + r.size.y);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
 void Renderer::DrawSphere(const Sphere& s)
 {
-    glEnable(GL_TEXTURE_2D);
-    //glDisable(GL_TEXTURE_2D);
+    //glEnable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);
 
     glPushMatrix();
 	glTranslatef(s.position.x, s.position.y, 0);
     glColor3f(s.color.x, s.color.y, s.color.z);
 
-	glBindTexture(GL_TEXTURE_2D, m_sphereTex);
+	//glBindTexture(GL_TEXTURE_2D, m_sphereTex);
 	GLUquadric* quadric = gluNewQuadric();
 	gluQuadricDrawStyle(quadric, GLU_FILL);
 	gluQuadricTexture(quadric, GL_TRUE);

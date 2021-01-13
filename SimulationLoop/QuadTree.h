@@ -1,17 +1,19 @@
 #pragma once
 
 #include "Geometry2D.h"
-#include "RigidBody.h"
 
 #include <vector>
 
 struct QuadTreeData 
 {
-	RigidBody*  object;
+	void*       object{ nullptr };
 	Rectangle2D bounds;
 	bool        flag;
 
-	QuadTreeData(RigidBody* o, const Rectangle2D& b) : 
+	QuadTreeData() :
+		flag(false) { }
+
+	QuadTreeData(void* o, const Rectangle2D& b) :
 		object(o), bounds(b), flag(false) { }
 };
 
@@ -29,7 +31,7 @@ public:
 	QuadTreeNode(const Rectangle2D& bounds) :
 		nodeBounds(bounds), currentDepth(0) { }
 
-	inline bool IsLeaf() { return children.size() == 0; };
+	inline bool IsLeaf() const { return children.size() == 0; };
 	int  NumObjects();
 	void Insert(QuadTreeData& data);
 	void Remove(QuadTreeData& data);
@@ -39,6 +41,8 @@ public:
 	void Reset();
 	std::vector<QuadTreeData*>Query(const Rectangle2D& area);
 
+	const Rectangle2D& NodeBounds() const { return nodeBounds; }
+	const std::vector<QuadTreeNode>& Children() const { return children; }
 };
 
 typedef QuadTreeNode QuadTree;

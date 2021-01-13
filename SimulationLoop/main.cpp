@@ -76,6 +76,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				break;
 			case VK_2:
 				// add cube
+				game->SpawnOBB();
 				break;
 			case VK_R:
 				// reset
@@ -120,11 +121,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				// decrease elaticity (0.1 to 1.0)
 				game->DecreaseRestitution();
 				break;
-			case VK_F1:
+			case VK_F1:				
 				game->ToggleDebugMode();
 				break;
 			case VK_F2:
-				game->SpawnBall(0,0);
+				game->ToggleDebugBoard();
 				break;
 			}
 			break;

@@ -10,8 +10,6 @@
 #include "Camera.h"
 #include "Constants.h"
 
-
-
 class Game
 {
 public:
@@ -19,15 +17,18 @@ public:
 	~Game(void);
 
 	Camera* camera;
+
 	static float frictionMag;
 	static float restitutionMag;
 	static float ballSize;
 	static bool  debugMode;
+	static bool  debugBoard;
 
 	void Update(float dt);
 	void Render();
 
 	static RigidBody* CreateBall(math::Vector3D pos);
+	static RigidBody* CreateCube(math::Vector3D pos);
 	
 	void Reset();
 	void Board();
@@ -35,6 +36,7 @@ public:
 	void DebugBoard();
 	void SpawnBall();
 	void SpawnBall(int x, int y);
+	void SpawnOBB();
 	void PauseResume();
 	void IncreaseTimeScale();
 	void DecreaseTimeScale();
@@ -46,6 +48,7 @@ public:
 	void DecreaseRestitution();
 
 	void ToggleDebugMode();
+	void ToggleDebugBoard();
 
 private:
 	HDC   m_hdc;
@@ -55,7 +58,7 @@ private:
 
 	bool  m_paused{ false };
 	float m_timeScale{ 1.f };
-	
+
 	PhysicsSystem* m_physicsSys;
 	LARGE_INTEGER start, end, frequency;
 

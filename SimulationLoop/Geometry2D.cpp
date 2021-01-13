@@ -29,3 +29,31 @@ bool RectangleRectangle(const Rectangle2D& rect1, const Rectangle2D& rect2) {
 
 	return xOverlap && yOverlap;
 }
+
+void FillRect2dFrom3d(Rectangle2D& rect, const math::Vector3D& pos, const math::Vector3D& size)
+{
+	rect.origin.x = pos.x - size.x;
+	rect.origin.y = pos.y - size.y;
+	rect.size.x = size.x * 2;
+	rect.size.y = size.y * 2;
+}
+
+void FillRect2dFrom3d(Rectangle2D& rect, const math::Vector3D& pos, float radius)
+{
+	rect.origin.x = pos.x - radius;
+	rect.origin.y = pos.y - radius;
+	rect.size.x = radius * 2;
+	rect.size.y = radius * 2;
+}
+
+void FillRect2dOriginFrom3d(math::Vector2D& origin, const math::Vector3D& pos, const math::Vector3D& size)
+{
+	origin.x = pos.x - size.x;
+	origin.y = pos.y - size.y;
+}
+
+void FillRect2dOriginFrom3d(math::Vector2D& origin, const math::Vector3D& pos, float radius)
+{
+	origin.x = pos.x - radius;
+	origin.y = pos.y - radius;
+}

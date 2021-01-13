@@ -351,7 +351,7 @@ bool Raycast(const OBB& obb, const Ray& ray, RaycastResult* outResult)
 	return true;
 }
 
-#if 0
+#if 1
 
 Interval GetInterval(const OBB& obb, const math::Vector3D& axis) 
 {
@@ -516,55 +516,5 @@ std::vector<math::Vector3D> GetVertices(const OBB& obb) {
 	return v;
 }
 
-void SphereCollisionWithPlane(const Sphere& sphere, const Plane& plane, ContactManifold* contactManifold)
-{
-	if (SpherePlane(sphere, plane))
-	{
-		const float BallDist = plane.normal.dot(sphere.position) - sphere.radius - plane.distance;
-
-		if (BallDist >= 0.0f) return;
-
-		ManifoldPoint point;
-		point.contactID1 = this;
-		point.contactID2_p = plane;
-		point.contactNormal = plane.normal;
-		point.depth = -BallDist;
-
-		math::Vector3D contact = sphere.position - plane.normal * (BallDist + sphere.radius);
-		point.contacts.push_back(contact);
-
-		contactManifold->Add(point);
-	}
-}
-
-void SphereCollisionWithTruePlane(const Sphere& sphere, const Plane& plane, ContactManifold* contactManifold)
-{
-	if (SpherePlane(sphere, plane))
-	{
-		const float centerDist = plane.normal.dot(sphere.position) - plane.distance;
-
-		if (centerDist * centerDist > sphere.radius * sphere.radius) return;
-
-		math::Vector3D normal = plane.normal;
-		float depth = -centerDist;
-		if (centerDist < 0)
-		{
-			normal = normal * -1;
-			depth = -depth;
-		}
-		depth += sphere.radius;
-
-		ManifoldPoint point;
-		point.contactID1 = this;
-		point.contactID2_p = plane;
-		point.contactNormal = normal;
-		point.depth = depth;
-
-		math::Vector3D contact = sphere.position - plane.normal * centerDist;
-		point.contacts.push_back(contact);
-
-		contactManifold->Add(point);
-	}
-}
 
 #endif

@@ -3,6 +3,7 @@
 #include "Geometry.h"
 #include "Math\Matrix4.h"
 #include "Constants.h"
+#include "QuadTree.h"
 
 enum class VolumeType
 {
@@ -28,9 +29,6 @@ public:
 	void AddRotationalImpulse(const math::Vector3D& point, const math::Vector3D& impulse);
 #endif
 
-#ifdef CONSTRAINT_BOARD
-	void SolveConstraints(const std::vector<OBB>& constraints);
-#endif
 	static void ApplyImpulse(RigidBody& A, RigidBody& B, const ManifoldPoint& P, int c);
 
 public:
@@ -54,10 +52,14 @@ public:
 	AABB           aabbVolume;
 	OBB            obbVolume;
 
+	unsigned int   id;
+	QuadTreeData*  quadTreeData{ nullptr };
+
 private:
 	math::Vector3D m_forces;
 #ifdef ANGULAR_VELOCITY
 	math::Vector3D m_torques;
 #endif
+
 
 };

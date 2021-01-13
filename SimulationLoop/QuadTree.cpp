@@ -1,8 +1,8 @@
 #include "QuadTree.h"
 #include <queue>
 
-int QuadTreeNode::maxDepth = 5;
-int QuadTreeNode::maxObjectsPerNode = 15;
+int QuadTreeNode::maxDepth = 10;
+int QuadTreeNode::maxObjectsPerNode = 50;
 
 int QuadTreeNode::NumObjects()
 {
@@ -21,8 +21,6 @@ int QuadTreeNode::NumObjects()
 		{
 			for (int i = 0, size = processing->children.size(); i < size; ++i)
 				process.push(&processing->children[i]);
-
-
 		}
 		else
 		{
@@ -74,14 +72,14 @@ void QuadTreeNode::Remove(QuadTreeData& data)
 		}
 
 		if (removeIndex != -1)
-			contents.erase(contents.begin() + 1);
+			contents.erase(contents.begin() + removeIndex);
 	}
 	else
 	{
 		for (int i = 0, size = children.size(); i < size; ++i)
 			children[i].Remove(data);
 	}
-	Shake();
+	//Shake();
 }
 
 void QuadTreeNode::Update(QuadTreeData& data)
@@ -135,9 +133,9 @@ void QuadTreeNode::Shake()
 
 void QuadTreeNode::Split()
 {
-	if (currentDepth + 1 >= maxDepth) {
+	if (currentDepth + 1 >= maxDepth)
 		return;
-	}
+
 	math::Vector2D min = GetMin(nodeBounds);
 	math::Vector2D max = GetMax(nodeBounds);
 	math::Vector2D center = min + ((max - min) * 0.5f);
@@ -165,11 +163,11 @@ void QuadTreeNode::Split()
 	{
 		children.push_back(QuadTreeNode(childAreas[i]));
 		children[i].currentDepth = currentDepth + 1;
+
+		for (int j = 0; j < contents.size(); ++j)
+			children[i].Insert(*contents[j]);
 	}
-	for (int i = 0, size = contents.size(); i < size; ++i)
-	{
-		children[i].Insert(*contents[i]);
-	}
+	
 	contents.clear();
 }
 
