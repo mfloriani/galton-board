@@ -10,6 +10,9 @@ Geometry collisions implemented:
 
 I implemented a Quad Tree algorithm to enhance the performance of the collisions.
 
+Access `Constant.h` to alter parameters that define how the simulation works.  
+e.g. `BALL_TOTAL` to change the initial amount of balls.
+
 ## Keys
 
 - ESC: quit
