@@ -1,6 +1,7 @@
-# galton-board
+# Galton-board
 
-Simulation implemented in C++ and OpenGL to simulate physics of a galton-board.
+Simulation implemented in C++ and OpenGL to simulate the physics of a Galton-board.  
+It was implemented a QuadTree algorithm to enhance the performance of the collisions.  
 
 Geometry collisions implemented:
 
@@ -8,11 +9,7 @@ Geometry collisions implemented:
 - AABB: walls and bins
 - OBB: funnel and pegs
 
-I implemented a Quad Tree algorithm to enhance the performance of the collisions.
-
-Access `Constant.h` to alter parameters that define how the simulation works, e.g. `BALL_TOTAL` to change the initial amount of balls.
-
-## Keys
+## Controls
 
 - ESC: quit
 - W: move camera up
@@ -32,4 +29,4 @@ Access `Constant.h` to alter parameters that define how the simulation works, e.
 - B: decrease ball size
 - O: increase restitution (bouncing)
 - L: decrease restitution (bouncing)
-
+- F1: show the quad tree areas and collision boxes
