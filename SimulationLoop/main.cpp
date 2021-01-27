@@ -5,7 +5,8 @@
 #include "Math\Vector3D.h"
 #include "Constants.h"
 
-const char TITLE[] = "Window Creation";
+//const char TITLE[] = "Window Creation";
+auto TITLE = L"Window Creation";
 
 Game *game;
 
@@ -181,27 +182,27 @@ void InitializeOpenGL(HWND hwnd, int width, int height)
 
 	if (!(hDC=GetDC(hwnd)))							// Did We Get A Device Context?
 	{
-		MessageBox(NULL,"Can't Create A GL Device Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(NULL,L"Can't Create A GL Device Context.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
 	}
 
 	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
 	{
-		MessageBox(NULL,"Can't Find A Suitable PixelFormat.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(NULL,L"Can't Find A Suitable PixelFormat.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
 	}
 
 	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
 	{
-		MessageBox(NULL,"Can't Set The PixelFormat.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(NULL,L"Can't Set The PixelFormat.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
 	}
 
 	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
 	{
-		MessageBox(NULL,"Can't Create A GL Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(NULL,L"Can't Create A GL Rendering Context.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
 	}
 
 	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
 	{
-		MessageBox(NULL,"Can't Activate The GL Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(NULL,L"Can't Activate The GL Rendering Context.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
 	}
 
 	ShowWindow(hwnd,SW_SHOW);						// Show The Window
@@ -262,14 +263,15 @@ int WINAPI WinMain( HINSTANCE hinstance,
 	winclass.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	winclass.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	winclass.lpszMenuName	= NULL;
-	winclass.lpszClassName	= "WindowCreation";
+	winclass.lpszClassName	= L"WindowCreation";
 
 	// register the window class
 	if (!RegisterClass(&winclass))
 		return(0);
 
+
 	// create the window
-	if (!(hwnd = CreateWindow( "WindowCreation", // class
+	if (!(hwnd = CreateWindow(L"WindowCreation", // class
 		TITLE,	     // title
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		0,
